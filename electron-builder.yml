@@ -1,0 +1,50 @@
+appId: com.agc.billing
+productName: AGC Billing
+copyright: Copyright © 2026 Anjaneya Gold Company
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - node_modules/better-sqlite3/**/*
+  - node_modules/bindings/**/*
+  - node_modules/file-uri-to-path/**/*
+  - package.json
+
+extraResources:
+  - from: assets/
+    to: assets/
+    filter:
+      - "**/*"
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: dir
+      arch:
+        - x64
+  icon: build/icon.ico
+  artifactName: "AGC-Billing-Setup-${version}.${ext}"
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: AGC Billing & Management System
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+
+asar: true
+asarUnpack:
+  - "**/*.node"
+  - "**/node_modules/better-sqlite3/**"
+  - "**/node_modules/bindings/**"
+  - "**/node_modules/file-uri-to-path/**"
