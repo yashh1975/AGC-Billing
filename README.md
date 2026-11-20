@@ -1,148 +1,268 @@
-# AGC Billing & Management System
-### Anjaneya Gold Company (AGC) — Professional Desktop Billing Application
+# AGC Billing & Management System — Offline GST Billing, Financial Services & Dealer Purchases
 
-A robust, offline-first, professional Windows desktop billing and GST management software developed specifically for **Anjaneya Gold Company (AGC)**. Built with Electron 32, React 18, TypeScript, Tailwind CSS, SQLite (`better-sqlite3`), Drizzle ORM, jsPDF, and ExcelJS.
+### The complete, offline-first desktop GST billing, loan takeover & dealer purchase software for Anjaneya Gold Company.
 
----
-
-## Key Highlights & Business Rules
-
-1. **Strict Exclusion of Gold Purity**:
-   - Per explicit AGC company guidelines, gold purity (e.g. 22K, 24K, 916) is **strictly omitted** from all sales billing forms, sales invoice PDFs, database records, search screens, and CA report registers.
-
-2. **Three Core Billing Modules**:
-   - **Dealer Purchase Bill Recording**: Records original dealer invoices with dealer bill numbers, dates, attachments, and generates an internal AGC record stamped with: `"INTERNAL PURCHASE RECORD – NOT A TAX INVOICE"`.
-   - **Sales Billing**: Professional GST invoices with line-item weights, rates, making charges, discounts, intra-state (CGST+SGST) vs. inter-state (IGST) calculations, payment tracking, and A4 print/PDF generation.
-   - **Financial Services Billing**: Outward service tax invoices for Gold Loan Takeover, Re-pledging, Settlement, and Valuation services with statutory SAC 9971 classification (18% GST) and independent sequence numbers.
-
-3. **Financial Year Isolation & Document Numbering**:
-   - Independent numbering series per module (e.g., `AGC/S/26-27/0001`, `AGC/P/26-27/0001`, `AGC/SV/26-27/0001`).
-   - Hard isolation: documents belong strictly to the financial year dictated by their invoice date.
-
-4. **Automatic Customer & Supplier Management**:
-   - Direct entry during billing automatically registers parties with permanent identifiers (`AGC-CUS-XXXX`, `AGC-SUP-XXXX`).
-   - Duplicate detection on GSTIN, mobile, and legal name.
-
-5. **Automated Local Storage Vault**:
-   - PDF documents organized automatically: `AGC_Billing/Documents/[FinancialYear]/[Category]/[Month]/`.
-   - Supplier invoice attachments organized: `AGC_Billing/Attachments/Supplier_Invoices/[FinancialYear]/`.
-   - CA/GST Excel exports saved under: `AGC_Billing/GST_Reports/[FinancialYear]/`.
-
-6. **Audit-Ready Excel Reports for CA Filing**:
-   - Generates 5 dedicated registers with ExcelJS:
-     1. Sales Register (Item-level breakdown, strictly NO purity)
-     2. Dealer Purchase Register (With original dealer invoice details)
-     3. Service Register (SAC 9988 jobwork invoices)
-     4. GST Tax Summary (Outward vs. Inward ITC reconciliation)
-     5. Tariff-wise HSN / SAC Summary
-
-7. **Universal Search & Automated Backup**:
-   - `Ctrl + K` global command palette across invoices, customers, and suppliers.
-   - Verified ZIP backup creation with atomic SQLite snapshot and SHA-256 checksum verification.
+<p align="center">
+  <a href="https://github.com/yashh1975/AGC-Billing/releases"><img src="https://img.shields.io/badge/Release-v1.0.0-gold.svg?style=for-the-badge&logo=windows" alt="Latest Release" /></a>
+  <a href="https://github.com/yashh1975/AGC-Billing/releases"><img src="https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg?style=for-the-badge&logo=windows11" alt="Platform" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Proprietary%20%2F%20AGC-red.svg?style=for-the-badge" alt="License" /></a>
+  <img src="https://img.shields.io/badge/Database-SQLite%203%20(Local%20%26%20WAL)-003B57.svg?style=for-the-badge&logo=sqlite" alt="SQLite" />
+  <img src="https://img.shields.io/badge/GST-HSN%207113%20%7C%20SAC%209971-success.svg?style=for-the-badge" alt="GST Compliance" />
+  <img src="https://img.shields.io/badge/Tests-50%2F50%20Passed-brightgreen.svg?style=for-the-badge" alt="Tests" />
+</p>
 
 ---
 
-## Technology Stack
+**Tax invoices, dealer purchases, gold loan takeovers & releases, audit-ready CA Excel registers, automated PDF vault, WhatsApp sharing, and multi-year bookkeeping — 100% offline, on your own computer.**
 
-- **Desktop Shell**: Electron 32 (Context Isolation, Sandboxed Preload, Single Instance Lock)
-- **Frontend**: React 18, TypeScript 5, Vite 5, Tailwind CSS, Radix UI Primitives, Lucide Icons
-- **Database**: SQLite 3 via `better-sqlite3` with WAL mode and `drizzle-orm`
-- **PDF Engine**: `jspdf` vector A4 engine with Times New Roman typography and metallic gold aesthetics
-- **Spreadsheets**: `exceljs` styled multi-tab workbooks
-- **Packaging**: `electron-builder` with NSIS Windows installer
+**Works offline. No cloud leaks. No tracking. No ads. No subscription fees. Zero internet required for daily billing.**
 
----
+A specialized desktop billing software tailored for gold jewellery and financial services: generate statutory sales tax invoices, record dealer purchase bills with attachment scans, issue takeover/re-pledging service receipts, and export complete audit-ready 5-tab Excel workbooks for your Chartered Accountant in seconds.
 
-## Directory Structure
+<p align="center">
+  <a href="https://github.com/yashh1975/AGC-Billing/releases/download/v1.0.0/AGC-Billing-Setup-1.0.0.exe">
+    <img src="https://img.shields.io/badge/%E2%AC%87%20WINDOWS%20SETUP%20(.EXE)-103%20MB-blue?style=for-the-badge&logo=windows" alt="Download for Windows" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="#what-it-does">
+    <img src="https://img.shields.io/badge/%F0%9F%93%8B%20SEE%20WHAT%20IT%20DOES-black?style=for-the-badge" alt="What It Does" />
+  </a>
+  &nbsp;&nbsp;
+  <a href="#frequently-asked-questions-faq">
+    <img src="https://img.shields.io/badge/%E2%9D%93%20FAQ%20%26%20GST%20RULES-orange?style=for-the-badge" alt="FAQ" />
+  </a>
+</p>
 
-```
-agc-billing/
-├── assets/                  # Brand assets (AGC Logo)
-├── build/                   # App icon and build resources
-├── drizzle/                 # Drizzle schema migrations
-├── electron/
-│   ├── database/            # SQLite init, schema, migrations, seed
-│   ├── file-manager/        # Folder organization and path resolution
-│   ├── ipc/                 # Electron IPC handlers
-│   ├── main/                # Main process entry, window lifecycle
-│   ├── preload/             # Context bridge exposing window.api
-│   ├── security/            # App security, CSP, input hygiene
-│   └── services/            # PDF service, Excel service, Backup service
-├── src/
-│   ├── assets/              # Renderer assets
-│   ├── components/          # Layout, Navigation, Modals, Forms
-│   ├── hooks/               # Custom React hooks (useAuth, useFinancialYear, useToast)
-│   ├── lib/                 # Utility functions
-│   ├── pages/               # Application views
-│   │   ├── all-bills/       # Master unified billing browser
-│   │   ├── customers/       # Customer profiles and ledger
-│   │   ├── dashboard/       # Real-time financial metrics
-│   │   ├── dealer-purchase/ # Module 1: Dealer purchase recording
-│   │   ├── documents/       # PDF document vault browser
-│   │   ├── gst-reports/     # CA/GST Excel export center
-│   │   ├── login/           # Authentication page
-│   │   ├── sales/           # Module 2: Sales billing
-│   │   ├── service/         # Module 3: Service billing
-│   │   ├── settings/        # Business profile, FY, masters, backups
-│   │   ├── setup-wizard/    # First-launch configuration wizard
-│   │   └── suppliers/       # Supplier profiles and purchase history
-│   ├── services/            # Client GST engine, PDF generator
-│   └── types/               # TypeScript interfaces and DB models
-├── tests/
-│   └── unit/                # Automated Vitest test suites (Phases 1 - 4)
-├── electron-builder.yml     # Windows packaging & NSIS configuration
-├── package.json
-└── vite.config.ts
-```
+> **Quick Download**: [AGC-Billing-Setup-1.0.0.exe (103 MB)](https://github.com/yashh1975/AGC-Billing/releases/download/v1.0.0/AGC-Billing-Setup-1.0.0.exe) · Self-contained Windows installer · Desktop & Start Menu shortcuts · Zero dependencies.
 
 ---
 
-## Running Locally
+## What It Does
 
-### Development Mode:
-```bash
-npm install
-npm run dev
-```
+* **Sales Billing (Gold Jewellery & Articles)**:
+  * Full GST tax invoice generation under **HSN 7113** (3% GST).
+  * Automatically calculates **Intra-State (1.5% CGST + 1.5% SGST)** vs. **Inter-State (3% IGST)** based on place of supply.
+  * Line-item breakdown: Gross Weight, Net Weight, Rate per Gram, Making Charges, and Discounts.
+  * Built-in mathematical engine calculating in exact integer paise to prevent rounding discrepancies.
+  * Real-time side-by-side **A4 Live Invoice Preview** and instant vector PDF generation.
+  * Direct **WhatsApp Web Sharing** with pre-filled professional customer greeting and invoice details.
 
-### Run Tests:
+* **Financial Services (Gold Loan Takeover, Release & Settlement)**:
+  * Statutory service tax invoices under **SAC 9971** (18% GST).
+  * Purpose-built presets for **Gold Loan Takeover & Release**, **Re-pledging & Documentation**, **Loan Settlement & Equity Payout**, and **Gold Valuation**.
+  * **Strict Statutory Compliance**: Tax is applied **strictly to the service facilitation fee** (e.g. ₹500 fee $\rightarrow$ ₹590 total invoice with ₹45 CGST + ₹45 SGST), protecting your business from falsely taxing the ₹1,00,000+ principal loan disbursement.
+
+* **Dealer Purchase Recording**:
+  * Record inward dealer bills with supplier invoice number, dealer invoice date, supplier GSTIN, and gross/net weights.
+  * Drag-and-drop supplier invoice bill scan/PDF preservation.
+  * Generates internal AGC audit slips stamped with:  
+    `"INTERNAL PURCHASE RECORD – NOT A TAX INVOICE – FOR GSTR-2B VERIFICATION ONLY"`.
+
+* **Audit-Ready Excel Reports for CA Filing**:
+  * One-click master Excel workbook generation (`.xlsx`) containing 5 dedicated registers:
+    1. **Sales Register**: Complete outward sales with taxable values, CGST, SGST, IGST, and invoice numbers.
+    2. **Dealer Purchase Register**: Inward supply details with supplier invoice references for GSTR-2B ITC reconciliation.
+    3. **Financial Services Register**: SAC 9971 service invoices at 18% GST.
+    4. **GST Tax Summary**: Month-by-month Outward Tax Liability vs. Inward ITC Net Payable calculation.
+    5. **Tariff-wise HSN / SAC Summary**: Statutory summary table formatted for direct GSTR-1 Table 12 filing.
+
+* **Party Directory (Customers & Suppliers)**:
+  * Direct on-the-fly registration during billing without leaving the form.
+  * Permanent identifiers: `AGC-CUS-XXXX` for customers and `AGC-SUP-XXXX` for suppliers.
+  * Duplicate detection preventing accidental double entries by GSTIN, Mobile, or Name.
+
+* **Automated Local Storage Vault**:
+  * Invoices and documents are systematically organized into an automated folder hierarchy:  
+    `AGC_Billing/Documents/[FinancialYear]/[Category]/[Month]/`
+  * Supplier invoice scans preserved under:  
+    `AGC_Billing/Attachments/Supplier_Invoices/[FinancialYear]/`
+
+* **Strict Gold Purity Exclusion**:
+  * Per company policy and statutory compliance guidelines, gold purity markings (e.g. 22K, 24K, 916) are **strictly omitted** across all sales invoices, dealer purchase internal slips, database fields, search dialogs, and CA reports.
+
+---
+
+## Download and Install
+
+### Windows 10 / 11 (64-bit)
+
+1. **[Download AGC-Billing-Setup-1.0.0.exe](https://github.com/yashh1975/AGC-Billing/releases/download/v1.0.0/AGC-Billing-Setup-1.0.0.exe)** (about 103 MB).
+2. **Double-click** the installer in your `Downloads` folder.  
+   *(If Windows SmartScreen prompts "Windows protected your PC", click **More info** $\rightarrow$ **Run anyway**)*.
+3. The installer automatically configures program files, creates **Desktop** and **Start Menu** shortcuts, and launches the application.
+4. On first launch, the local SQLite database and document vault are automatically created in your user directory.
+
+> **Zero Prerequisites**: You do **not** need Node.js, Python, Git, SQLite, or any external drivers. The setup is 100% self-contained.
+
+---
+
+## Is It Safe? (Data Privacy & Integrity)
+
+* **Your data never leaves your computer**: All business records, customer contact information, invoice numbers, and accounting figures are stored exclusively on your local machine in an SQLite database.
+* **No cloud servers, no tracking, no analytics**: The application runs completely disconnected from third-party cloud servers.
+* **OS-Level Separation of Code and Data**:
+  * **Application Binaries**: `C:\Users\<User>\AppData\Local\Programs\AGC Billing\`
+  * **Business Database & Invoices**: `C:\Users\<User>\AppData\Roaming\agc-billing\AGC_Data\`
+* **Zero-Data-Loss Updates**: When installing future updates (e.g. `v1.0.1`), the installer only replaces application code in `Local\Programs`. It **never touches or deletes your database or documents** in `AppData\Roaming`.
+* **Automated & Manual Backups**: Go to **Settings $\rightarrow$ Backup & Restore** (or press `Ctrl + K`) to generate a timestamped, atomic SQLite database snapshot packaged into a verified `.zip` archive.
+
+---
+
+## Your First Invoice in 2 Minutes
+
+### Creating a Sales Invoice:
+1. Open **AGC Billing** from your desktop shortcut.
+2. Click **Sales Billing** on the sidebar.
+3. Type the customer's name and mobile number (the system auto-registers returning customers).
+4. Enter line items: Description (e.g. *Gold Jewellery Article*), Gross Weight, Net Weight, and Rate per Gram.
+5. Review the live side-by-side A4 preview.
+6. Click **Finalize Invoice** $\rightarrow$ Click **Print A4** or **Share on WhatsApp**.
+
+### Creating a Gold Loan Takeover Service Receipt:
+1. Click **Service Billing** on the sidebar.
+2. Select or enter the customer's details.
+3. Click the quick preset button **`+ Gold Loan Takeover`** (automatically fills SAC `9971` at `18%` GST).
+4. In the **Rate (₹)** column, enter your service facilitation fee (e.g. `500`).
+5. The system automatically computes ₹45 CGST (9%) + ₹45 SGST (9%) = **₹590 Total**.
+6. Click **Finalize Invoice**.
+
+---
+
+## Filing GST Returns with Your CA
+
+1. In the sidebar, navigate to **GST Reports**.
+2. Select the **Financial Year** (e.g. `2026-27`) and the **Reporting Period** (Monthly, Quarterly, or Full Financial Year).
+3. Review the live register tables on-screen across 5 tabs:
+   * **Sales (Outward)**
+   * **Dealer Purchases (Inward)**
+   * **Financial Services (SAC 9971)**
+   * **GST Tax Summary**
+   * **HSN / SAC Summary**
+4. Click **Export Master Workbook (.xlsx)**.
+5. Email or share the generated Excel workbook directly with your Chartered Accountant for GSTR-1 and GSTR-3B monthly filing.
+
+---
+
+## Frequently Asked Questions (FAQ)
+
+<details>
+<summary><strong>Does 18% GST apply to the ₹1,00,000 takeover loan amount or only the service fee?</strong></summary>
+
+<br>
+
+**Only to the service fee (e.g. ₹500).**  
+Under Sections 2(52) and 2(102) of the CGST Act, 2017, pure money transactions (loans, repayments, debt settlements, disbursements) are legally excluded from GST. When you disburse ₹1,00,000 to release gold from a pawn shop or bank, that ₹1,00,000 is principal debt settlement, not taxable income. Under **SAC 9971**, GST is levied strictly on the consideration you earn for facilitating the transaction (your ₹500 service fee), generating a compliant tax invoice of **₹590 (₹500 fee + ₹90 GST)**.
+</details>
+
+<details>
+<summary><strong>What happens to my invoices and data when I update the software?</strong></summary>
+
+<br>
+
+**Your data is 100% safe and will never be lost.**  
+The software strictly separates code from data. The executable program lives in `AppData\Local\Programs\AGC Billing`, while your database (`agc-billing.db`), customer files, and invoices live in `AppData\Roaming\agc-billing\AGC_Data`. Running an update installer (e.g. `AGC-Billing-Setup-1.0.1.exe`) only updates the program binaries and leaves your entire business database untouched. In addition, automated Drizzle ORM migrations update the database schema seamlessly on startup.
+</details>
+
+<details>
+<summary><strong>Does this software require an internet connection?</strong></summary>
+
+<br>
+
+**No, it is 100% offline.**  
+All calculations, database transactions, invoice rendering, and Excel exports execute locally on your computer's CPU and disk. An internet connection is only needed if you choose to click the WhatsApp share button to open WhatsApp Web.
+</details>
+
+<details>
+<summary><strong>Why are gold purity markings omitted from invoices?</strong></summary>
+
+<br>
+
+Per explicit AGC company policy and statutory compliance guidelines, purity markings (such as 22K, 24K, 916) are omitted to protect trade confidentiality and ensure billing uniformity across all sales and financial services.
+</details>
+
+<details>
+<summary><strong>How do I move my billing data to a new computer?</strong></summary>
+
+<br>
+
+1. On your old computer, open **Settings $\rightarrow$ Backup & Restore** and click **Create Backup**.
+2. Copy the generated `.zip` backup file to a pen drive.
+3. On the new computer, install `AGC-Billing-Setup-1.0.0.exe`.
+4. Open the app, go to **Settings $\rightarrow$ Backup & Restore**, and click **Restore from Backup**. Your entire billing history, customers, and settings are restored in seconds.
+</details>
+
+---
+
+## Technology Stack & Architecture
+
+Developed with a modern, high-performance desktop architecture:
+
+* **Desktop Framework**: Electron 32 (Context Isolation, Sandboxed Preload, Single-Instance Lock, GPU Optimization)
+* **Frontend**: React 18, TypeScript 5, Vite 5, Tailwind CSS
+* **UI Components**: Radix UI Primitives, Lucide Icons, Custom Gold Medallion Design System
+* **Local Database**: SQLite 3 via `better-sqlite3` (WAL Mode enabled for atomic, crash-proof transactions)
+* **ORM & Migrations**: Drizzle ORM with automated startup migrations
+* **Vector PDF Engine**: `jspdf` vector A4 engine with automatic multi-page overflow pagination and word-wrapping
+* **Spreadsheet Generator**: `exceljs` styled multi-sheet workbooks with statutory GST formulas
+* **Packaging**: `electron-builder` with multi-resolution `.ico` mipmaps and NSIS Windows installer
+
+### Automated Test Suite (50/50 Tests):
+The project includes complete end-to-end unit tests verifying:
+* Mathematical GST precision in integer paise (CGST, SGST, IGST)
+* Indian currency formatting and number-to-words engine
+* Multi-page PDF pagination and strict purity exclusion
+* 5-register CA Excel workbook generation
+* SQLite schema migrations, foreign key enforcement, and backup integrity
+
+Run the test suite locally:
 ```bash
 npm run test
 ```
 
-### Build Production Bundle:
-```bash
-npm run build
-```
+---
 
-### Generate Windows Setup / Executable:
+## Local Development
+
+### Prerequisites:
+* Windows 10/11
+* Node.js v20+
+* Git
+
+### Setup & Run:
 ```bash
+# Clone the repository
+git clone https://github.com/yashh1975/AGC-Billing.git
+cd AGC-Billing
+
+# Install dependencies
+npm install
+
+# Run Vite + Electron in development mode
+npm run dev
+
+# Run automated tests
+npm test
+
+# Build production bundle
+npm run build
+
+# Package standalone Windows installer (.exe)
 npm run package
 ```
-Outputs the standalone executable and distribution archive in `release/`:
-- **One-Click Windows Installer**: `release/AGC-Billing-Setup-1.0.0.exe` (Self-contained NSIS installer with desktop & start menu shortcuts)
-- **Unpacked Portable Executable**: `release/win-unpacked/AGC Billing.exe` (Ready to launch immediately without installation)
-- **Portable Distribution Zip**: `release/AGC-Billing-Windows-x64-v1.0.0.zip` (141 MB standalone package)
+
+The compiled setup installer will be output to:  
+`release/AGC-Billing-Setup-1.0.0.exe`
 
 ---
 
-## Installation & Deployment Guide
+## Author & Credits
 
-### On Any Client PC (Zero Prerequisites):
-1. Copy or download `AGC-Billing-Setup-1.0.0.exe` onto any Windows 10/11 system.
-2. Double-click the installer. It will automatically:
-   - Install the application into standard program files.
-   - Create Desktop and Start Menu shortcuts.
-   - Initialize the local SQLite database in `%APPDATA%\agc-billing\AGC_Data\agc-billing.db` with automated migrations.
-3. No Node.js, Python, or external database drivers are needed.
-
-### Safe Future Updates (Zero Data Loss):
-- **Code vs. Data Separation**: The software executable is stored in `AppData\Local\Programs\AGC Billing`, while all business records, invoices, and settings live in `AppData\Roaming\agc-billing\AGC_Data`.
-- Running an updated installer (e.g. `v1.0.1`) only updates application binaries. Your database, customer ledgers, and generated PDFs remain completely untouched.
-- Drizzle ORM runs schema migrations automatically on startup to cleanly upgrade database structures without data loss.
+* **Business**: Developed exclusively for **Anjaneya Gold Company (AGC)**, Bengaluru, Karnataka.
+* **Developer**: **Yashwanth Kumar** ([@yashh1975](https://github.com/yashh1975))
+* **GitHub Repository**: [https://github.com/yashh1975/AGC-Billing](https://github.com/yashh1975/AGC-Billing)
 
 ---
 
 ## License
 
-Proprietary — Developed exclusively for **Anjaneya Gold Company**. All rights reserved.
+Proprietary Software — Developed for **Anjaneya Gold Company**. All rights reserved.
