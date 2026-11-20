@@ -184,6 +184,7 @@ declare global {
           getById: (id: number) => Promise<ApiResponse>;
           create: (data: Record<string, unknown>) => Promise<ApiResponse>;
           update: (id: number, data: Record<string, unknown>) => Promise<ApiResponse>;
+          cancel: (id: number, reason: string) => Promise<ApiResponse>;
         };
         serviceInvoices: {
           getAll: (filters?: Record<string, unknown>) => Promise<ApiResponse>;
