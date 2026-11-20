@@ -18,15 +18,7 @@ import {
   RefreshCw,
   Eye,
   ExternalLink,
-  Ban,
 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import { useFinancialYear } from '@/hooks/useFinancialYear';
 import { InvoicePrintView } from '@/components/shared/InvoicePrintView';
 import { useToast } from '@/hooks/useToast';
@@ -250,58 +242,6 @@ export function AllBillsPage() {
       });
     } finally {
       setSharingBillId(null);
-    }
-  };
-
-  // Bill Cancellation State & Handlers
-  const [cancelModal, setCancelModal] = useState<{
-    isOpen: boolean;
-    bill: any | null;
-    reason: string;
-  }>({
-    isOpen: false,
-    bill: null,
-    reason: 'Entered by mistake',
-  });
-  const [isCancelling, setIsCancelling] = useState(false);
-
-  const handleConfirmCancel = async () => {
-    if (!cancelModal.bill) return;
-    setIsCancelling(true);
-    try {
-      const { category, id, document_number } = cancelModal.bill;
-      let res: any;
-      if (category === 'sales') {
-        res = await window.api.db.salesInvoices.cancel(id, cancelModal.reason);
-      } else if (category === 'purchase') {
-        res = await window.api.db.dealerPurchases.cancel(id, cancelModal.reason);
-      } else if (category === 'service') {
-        res = await window.api.db.serviceInvoices.cancel(id, cancelModal.reason);
-      }
-
-      if (res && res.success) {
-        toast({
-          title: 'Invoice Cancelled',
-          description: `Bill ${document_number} marked as cancelled and excluded from GST / CA reports.`,
-          variant: 'default',
-        });
-        setCancelModal({ isOpen: false, bill: null, reason: 'Entered by mistake' });
-        await loadBills();
-      } else {
-        toast({
-          title: 'Cancellation Failed',
-          description: res?.error || 'Unable to cancel this invoice.',
-          variant: 'destructive',
-        });
-      }
-    } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: err.message || 'An error occurred during cancellation.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsCancelling(false);
     }
   };
 
@@ -659,24 +599,6 @@ export function AllBillsPage() {
                               )}
                             </Button>
                           )}
-
-                          {bill.status !== 'cancelled' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                setCancelModal({
-                                  isOpen: true,
-                                  bill,
-                                  reason: 'Entered by mistake',
-                                })
-                              }
-                              className="h-7 w-7 p-0 hover:bg-rose-50 text-gray-400 hover:text-rose-600"
-                              title="Cancel Bill (Zeroes tax & excludes from CA reports)"
-                            >
-                              <Ban className="w-3.5 h-3.5" />
-                            </Button>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -696,74 +618,6 @@ export function AllBillsPage() {
           record={previewModal.data}
         />
       )}
-
-      {/* Cancellation Confirmation Dialog */}
-      <Dialog
-        open={cancelModal.isOpen}
-        onOpenChange={(open) =>
-          !open && setCancelModal({ isOpen: false, bill: null, reason: 'Entered by mistake' })
-        }
-      >
-        <DialogContent className="max-w-md font-serif">
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold text-[#171717] flex items-center gap-2">
-              <Ban className="w-5 h-5 text-rose-600" />
-              Cancel Invoice {cancelModal.bill?.document_number}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-3 py-2 text-xs text-gray-600">
-            <p>
-              Are you sure you want to cancel this bill for{' '}
-              <strong className="text-black">{cancelModal.bill?.party_name || 'Customer'}</strong> amounting to{' '}
-              <strong className="text-black">
-                ₹{((cancelModal.bill?.total_amount || 0) / 100).toLocaleString('en-IN', {
-                  minimumFractionDigits: 2,
-                })}
-              </strong>?
-            </p>
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-900 leading-relaxed text-[11px]">
-              <strong>GST Compliance Note:</strong> The invoice will be permanently marked as{' '}
-              <strong>CANCELLED</strong>. Its tax liability will be zeroed and completely excluded from
-              your CA GST filing registers. The invoice serial number is preserved to maintain consecutive
-              serial numbering audit integrity.
-            </div>
-
-            <div className="space-y-1 pt-1">
-              <label className="font-semibold text-gray-700">Cancellation Reason:</label>
-              <Input
-                value={cancelModal.reason}
-                onChange={(e) => setCancelModal({ ...cancelModal, reason: e.target.value })}
-                placeholder="e.g. Wrong customer, incorrect weight, billing typo"
-                className="h-8 text-xs"
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2 sm:gap-0 pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setCancelModal({ isOpen: false, bill: null, reason: 'Entered by mistake' })
-              }
-              disabled={isCancelling}
-              className="text-xs"
-            >
-              Keep Invoice
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleConfirmCancel}
-              disabled={isCancelling}
-              className="text-xs bg-rose-600 hover:bg-rose-700 text-white font-semibold"
-            >
-              {isCancelling ? 'Cancelling...' : 'Confirm Cancellation'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
