@@ -13,6 +13,7 @@ export interface PledgeInput {
   principalAmount: number;
   interestRate?: string;
   pledgeDate?: string;
+  pledgedName?: string;
   pledgedItemName?: string;
   pledgePlace?: string;
   pledgeAmount: number;
@@ -49,11 +50,12 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
         query += ` AND (
           LOWER(customer_name) LIKE ? OR
           LOWER(IFNULL(phone_number, '')) LIKE ? OR
+          LOWER(IFNULL(pledged_name, '')) LIKE ? OR
           LOWER(IFNULL(pledged_item_name, '')) LIKE ? OR
           LOWER(IFNULL(pledge_place, '')) LIKE ? OR
           LOWER(IFNULL(customer_address, '')) LIKE ?
         )`;
-        params.push(term, term, term, term, term);
+        params.push(term, term, term, term, term, term);
       }
 
       query += ' ORDER BY record_date DESC, id DESC';
@@ -116,13 +118,14 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
           principal_amount,
           interest_rate,
           pledge_date,
+          pledged_name,
           pledged_item_name,
           pledge_place,
           pledge_amount,
           pledge_interest,
           status,
           notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       const res = stmt.run(
@@ -133,6 +136,7 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
         Number(input.principalAmount) || 0,
         input.interestRate?.trim() || null,
         input.pledgeDate || null,
+        input.pledgedName?.trim() || null,
         input.pledgedItemName?.trim() || null,
         input.pledgePlace?.trim() || null,
         Number(input.pledgeAmount) || 0,
@@ -166,6 +170,7 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
           principal_amount = ?,
           interest_rate = ?,
           pledge_date = ?,
+          pledged_name = ?,
           pledged_item_name = ?,
           pledge_place = ?,
           pledge_amount = ?,
@@ -184,6 +189,7 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
         input.principalAmount !== undefined ? Number(input.principalAmount) : existing.principal_amount,
         input.interestRate !== undefined ? input.interestRate?.trim() : existing.interest_rate,
         input.pledgeDate !== undefined ? input.pledgeDate : existing.pledge_date,
+        input.pledgedName !== undefined ? input.pledgedName?.trim() : existing.pledged_name,
         input.pledgedItemName !== undefined ? input.pledgedItemName?.trim() : existing.pledged_item_name,
         input.pledgePlace !== undefined ? input.pledgePlace?.trim() : existing.pledge_place,
         input.pledgeAmount !== undefined ? Number(input.pledgeAmount) : existing.pledge_amount,
@@ -239,8 +245,15 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
         views: [{ showGridLines: true, state: 'frozen', ySplit: 5 }],
       });
 
-      // Title & Subtitle
-      sheet.mergeCells('A1:M1');
+      // Helper to ensure percentage symbol is always present for interest rates
+      const formatPct = (val?: string | null): string => {
+        if (!val || !val.trim()) return '';
+        const t = val.trim();
+        return t.includes('%') ? t : `${t}%`;
+      };
+
+      // Title & Subtitle (15 columns A to O)
+      sheet.mergeCells('A1:O1');
       const titleCell = sheet.getCell('A1');
       titleCell.value = `${(company.business_name || 'ANJANEYA GOLD COMPANY').toUpperCase()} — PLEDGE DETAILS REGISTRY`;
       titleCell.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
@@ -248,7 +261,7 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
       titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
       sheet.getRow(1).height = 32;
 
-      sheet.mergeCells('A2:M2');
+      sheet.mergeCells('A2:O2');
       const subCell = sheet.getCell('A2');
       subCell.value = `Exported on: ${new Date().toLocaleString('en-IN')} | Total Records: ${records.length}`;
       subCell.font = { name: 'Arial', size: 9, italic: true, color: { argb: 'FF555555' } };
@@ -264,15 +277,16 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
         'Sl No',
         'Record Date',
         'Customer Name',
+        'Pledged Name',
         'Phone Number',
         'Address',
         'Principal Amt (₹)',
-        'Customer Interest',
+        'Customer Interest (%)',
         'Pledge Date',
         'Pledged Item Name',
         'Pledge Place / Bank',
         'Pledge Amount (₹)',
-        'Pledge Interest',
+        'Pledge Interest (%)',
         'Status',
         'Notes',
       ];
@@ -309,15 +323,16 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
           i + 1,
           r.record_date || '',
           r.customer_name || '',
+          r.pledged_name || '',
           r.phone_number || '',
           r.customer_address || '',
           pAmt,
-          r.interest_rate || '',
+          formatPct(r.interest_rate),
           r.pledge_date || '',
           r.pledged_item_name || '',
           r.pledge_place || '',
           plAmt,
-          r.pledge_interest || '',
+          formatPct(r.pledge_interest),
           (r.status || 'active').toUpperCase(),
           r.notes || '',
         ];
@@ -338,16 +353,18 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
           };
 
           // Alignment & number formatting
-          if (colNumber === 1 || colNumber === 2 || colNumber === 8 || colNumber === 13) {
+          if (colNumber === 1 || colNumber === 2 || colNumber === 9 || colNumber === 14) {
             cell.alignment = { horizontal: 'center', vertical: 'middle' };
-          } else if (colNumber === 6 || colNumber === 11) {
+          } else if (colNumber === 8 || colNumber === 13) {
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          } else if (colNumber === 7 || colNumber === 12) {
             cell.alignment = { horizontal: 'right', vertical: 'middle' };
             cell.numFmt = '#,##0.00';
           } else {
             cell.alignment = { horizontal: 'left', vertical: 'middle' };
           }
 
-          if (colNumber === 13) {
+          if (colNumber === 14) {
             cell.font = {
               name: 'Arial',
               size: 9,
@@ -364,6 +381,7 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
       const totalRow = sheet.getRow(currentRow);
       totalRow.values = [
         'TOTAL',
+        '',
         '',
         '',
         '',
@@ -388,7 +406,7 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
           left: { style: 'thin', color: { argb: 'FFE0E0E0' } },
           right: { style: 'thin', color: { argb: 'FFE0E0E0' } },
         };
-        if (colNumber === 6 || colNumber === 11) {
+        if (colNumber === 7 || colNumber === 12) {
           cell.alignment = { horizontal: 'right', vertical: 'middle' };
           cell.numFmt = '#,##0.00';
         } else if (colNumber === 1) {
@@ -398,20 +416,21 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
 
       // Set explicit column widths
       sheet.columns = [
-        { width: 8 },  // Sl No
-        { width: 14 }, // Record Date
-        { width: 24 }, // Customer Name
-        { width: 16 }, // Phone
-        { width: 28 }, // Address
-        { width: 18 }, // Principal Amt
-        { width: 16 }, // Customer Interest
-        { width: 14 }, // Pledge Date
-        { width: 26 }, // Pledged Item Name
-        { width: 22 }, // Pledge Place
-        { width: 18 }, // Pledge Amt
-        { width: 16 }, // Pledge Interest
-        { width: 14 }, // Status
-        { width: 24 }, // Notes
+        { width: 8 },  // Sl No (1)
+        { width: 14 }, // Record Date (2)
+        { width: 22 }, // Customer Name (3)
+        { width: 20 }, // Pledged Name (4)
+        { width: 16 }, // Phone (5)
+        { width: 26 }, // Address (6)
+        { width: 18 }, // Principal Amt (7)
+        { width: 18 }, // Customer Interest (%) (8)
+        { width: 14 }, // Pledge Date (9)
+        { width: 24 }, // Pledged Item Name (10)
+        { width: 22 }, // Pledge Place (11)
+        { width: 18 }, // Pledge Amt (12)
+        { width: 18 }, // Pledge Interest (%) (13)
+        { width: 14 }, // Status (14)
+        { width: 24 }, // Notes (15)
       ];
 
       // Save file in AGC_Data/Pledge_Reports/

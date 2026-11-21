@@ -119,6 +119,7 @@ export interface PledgeRecord {
   principal_amount: number;
   interest_rate: string | null;
   pledge_date: string | null;
+  pledged_name: string | null;
   pledged_item_name: string | null;
   pledge_place: string | null;
   pledge_amount: number;

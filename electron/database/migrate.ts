@@ -379,6 +379,7 @@ export function runMigrations(db: Database.Database): void {
       principal_amount REAL NOT NULL DEFAULT 0,
       interest_rate TEXT,
       pledge_date TEXT,
+      pledged_name TEXT,
       pledged_item_name TEXT,
       pledge_place TEXT,
       pledge_amount REAL NOT NULL DEFAULT 0,
@@ -400,6 +401,9 @@ export function runMigrations(db: Database.Database): void {
   } catch {}
   try {
     db.prepare('ALTER TABLE service_invoice_items ADD COLUMN service_amount INTEGER NOT NULL DEFAULT 0').run();
+  } catch {}
+  try {
+    db.prepare('ALTER TABLE pledge_records ADD COLUMN pledged_name TEXT').run();
   } catch {}
 
   try {

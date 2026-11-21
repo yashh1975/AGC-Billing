@@ -503,6 +503,7 @@ export const pledgeRecords = sqliteTable('pledge_records', {
   principalAmount: real('principal_amount').notNull().default(0),
   interestRate: text('interest_rate'),
   pledgeDate: text('pledge_date'),
+  pledgedName: text('pledged_name'),
   pledgedItemName: text('pledged_item_name'),
   pledgePlace: text('pledge_place'),
   pledgeAmount: real('pledge_amount').notNull().default(0),

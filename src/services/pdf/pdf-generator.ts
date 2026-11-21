@@ -118,6 +118,7 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
   const company = data.companyProfile;
   const rightX = pageWidth - margin;
 
+  // Company Business Name (Right Top)
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12.5);
   doc.setTextColor(0, 0, 0); // Solid black
@@ -128,6 +129,7 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
     { align: 'right' }
   );
 
+  // Address lines (Right Top)
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(0, 0, 0);
@@ -136,23 +138,16 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
     '#20, 1ST FLOOR, SARASWATHIPURA MAIN ROAD,',
     'OPP. SATHYA SHANTHI GANAPATHI TEMPLE,',
     'NANDINI LAYOUT, BANGALURU - 560096',
-    'KARNATAKA',
-    `GSTIN: ${company.gstin || '29ACKFA4620Q1ZV'}`,
-    company.email ? company.email.toLowerCase() : 'anjaneyagoldcompany@gmail.com',
-    `PH: ${company.phone || '9008477669'}`,
   ];
 
-  let addrY = headerTopY + 6.2;
+  let addrY = headerTopY + 6.3;
   for (const line of addressLines) {
-    if (line.startsWith('GSTIN:') || line === 'KARNATAKA') {
-      doc.setFont('helvetica', 'bold');
-    } else {
-      doc.setFont('helvetica', 'normal');
-    }
-    doc.setTextColor(0, 0, 0);
     doc.text(line, rightX, addrY, { align: 'right' });
-    addrY += 3.6;
+    addrY += 3.5;
   }
+  // State line
+  doc.setFont('helvetica', 'bold');
+  doc.text('KARNATAKA', rightX, addrY, { align: 'right' });
 
   // Title on Left under logo with generous breathing room gap
   const isDraftDoc = Boolean(
@@ -189,11 +184,10 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
     doc.text('FOR REFERENCE & ESTIMATION ONLY — NOT A TAX INVOICE', margin, titleY + 3.8);
   }
 
-  // Meta lines under title
-  let metaY = isDraftDoc ? titleY + 8.2 : titleY + 5.5;
-  doc.setFontSize(8.5);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(0, 0, 0);
+  // Meta lines under title (Left) and Contact/Tax lines (Right) — PERFECT HORIZONTAL SYNCHRONIZATION
+  const metaY1 = isDraftDoc ? titleY + 8.2 : titleY + 5.5;
+  const metaY2 = metaY1 + 4.2;
+  const metaY3 = metaY2 + 4.2;
 
   const metaLabelX = margin;
   const metaValX = margin + 34;
@@ -202,19 +196,19 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
     ? 'ESTIMATE NO.'
     : (data.type === 'purchase' ? 'PURCHASE NO.' : 'INVOICE NO.');
 
-  doc.text(docLabel, metaLabelX, metaY);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0, 0, 0);
-  doc.text(data.documentNumber, metaValX, metaY);
-
-  metaY += 4.2;
+  // Row 1: Left = Document Number, Right = GSTIN
+  doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
-  doc.text('DATE', metaLabelX, metaY);
+  doc.text(docLabel, metaLabelX, metaY1);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0, 0, 0);
+  doc.text(data.documentNumber, metaValX, metaY1);
 
-  // Format date e.g. 17 NOV 2026
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`GSTIN: ${company.gstin || '29ACKFA4620Q1ZV'}`, rightX, metaY1, { align: 'right' });
+
+  // Row 2: Left = Date, Right = Email
   let formattedDate = data.invoiceDate;
   try {
     const d = new Date(data.invoiceDate);
@@ -225,26 +219,39 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       formattedDate = `${day} ${month} ${year}`;
     }
   } catch {}
-  doc.text(formattedDate, metaValX, metaY);
 
-  metaY += 4.2;
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(0, 0, 0);
+  doc.text('DATE', metaLabelX, metaY2);
+  doc.setFont('helvetica', 'bold');
+  doc.text(formattedDate, metaValX, metaY2);
+
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text(company.email ? company.email.toLowerCase() : 'anjaneyagoldcompany@gmail.com', rightX, metaY2, { align: 'right' });
+
+  // Row 3: Left = Reverse Charge / Dealer Bill #, Right = Phone
+  doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
 
   if (data.type === 'purchase' && data.originalInvoiceNumber) {
-    doc.text('DEALER BILL #', metaLabelX, metaY);
+    doc.text('DEALER BILL #', metaLabelX, metaY3);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text(`${data.originalInvoiceNumber} (${data.originalInvoiceDate || ''})`, metaValX, metaY);
+    doc.text(`${data.originalInvoiceNumber} (${data.originalInvoiceDate || ''})`, metaValX, metaY3);
   } else {
-    doc.text('REVERSE CHARGE', metaLabelX, metaY);
+    doc.text('REVERSE CHARGE', metaLabelX, metaY3);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text('NO', metaValX, metaY);
+    doc.text('NO', metaValX, metaY3);
   }
 
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`PH: ${company.phone || '9008477669'}`, rightX, metaY3, { align: 'right' });
+
   // Bottom dividing horizontal line across full page content width matching LiveInvoicePreview
-  const headerDividerY = Math.max(metaY + 4.5, addrY + 2.0);
+  const headerDividerY = metaY3 + 4.5;
   doc.setDrawColor(0, 0, 0);
   doc.setLineWidth(0.35);
   doc.line(margin, headerDividerY, pageWidth - margin, headerDividerY);

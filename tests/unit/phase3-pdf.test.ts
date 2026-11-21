@@ -248,4 +248,60 @@ describe('Phase 3 - PDF Generation, Folder Vault & WhatsApp Engine', () => {
     expect(pdfText3).toContain('Page 1 of 3');
     expect(pdfText3).toContain('Page 3 of 3');
   });
+
+  it('service estimate and service invoice generate proper header titles and synchronized metadata', () => {
+    // Service estimate draft
+    const serviceDraftData: InvoicePdfData = {
+      ...sampleInvoiceData,
+      type: 'service',
+      documentNumber: 'EST-0006',
+      isDraft: true,
+      items: [
+        {
+          description: 'GOLD LOAN TAKEOVER & RELEASE SERVICE',
+          sacCode: '9971',
+          quantity: 1,
+          ratePaise: 50000,
+          principalAmountPaise: 10000000,
+          serviceAmountPaise: 50000,
+          discountPaise: 0,
+          gstRate: 18,
+          cgstAmountPaise: 4500,
+          sgstAmountPaise: 4500,
+          igstAmountPaise: 0,
+          taxableValuePaise: 50000,
+          totalValuePaise: 59000,
+        },
+      ],
+      taxableAmountPaise: 50000,
+      cgstAmountPaise: 4500,
+      sgstAmountPaise: 4500,
+      grandTotalPaise: 59000,
+      amountReceivedPaise: 59000,
+      balanceDuePaise: 0,
+    };
+
+    const docDraft = generateInvoicePdf(serviceDraftData);
+    const draftText = docDraft.output();
+    expect(draftText).toContain('SERVICE ESTIMATE / QUOTATION');
+    expect(draftText).toContain('FOR REFERENCE & ESTIMATION ONLY');
+    expect(draftText).toContain('EST-0006');
+    expect(draftText).toContain('GSTIN: 29ACKFA4620Q1ZV');
+    expect(draftText).toContain('anjaneyagoldcompany@gmail.com');
+    expect(draftText).toContain('PH: 9008477669');
+
+    // Service original invoice
+    const serviceInvoiceData: InvoicePdfData = {
+      ...serviceDraftData,
+      documentNumber: 'SRV/2026-27/0001',
+      isDraft: false,
+    };
+
+    const docInvoice = generateInvoicePdf(serviceInvoiceData);
+    const invoiceText = docInvoice.output();
+    expect(invoiceText).toContain('SERVICE TAX INVOICE');
+    expect(invoiceText).not.toContain('FOR REFERENCE & ESTIMATION ONLY');
+    expect(invoiceText).toContain('SRV/2026-27/0001');
+    expect(invoiceText).toContain('GSTIN: 29ACKFA4620Q1ZV');
+  });
 });

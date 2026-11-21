@@ -54,6 +54,7 @@ export function PledgeDetailsPage() {
     principalAmount: '',
     interestRate: '',
     pledgeDate: new Date().toISOString().slice(0, 10),
+    pledgedName: '',
     pledgedItemName: '',
     pledgePlace: '',
     pledgeAmount: '',
@@ -102,6 +103,12 @@ export function PledgeDetailsPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const formatPercentage = (val?: string | null): string => {
+    if (!val || !val.trim()) return '—';
+    const t = val.trim();
+    return t.includes('%') ? t : `${t}%`;
+  };
+
   // Handle Form Submit (Create or Update)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,6 +122,12 @@ export function PledgeDetailsPage() {
       return;
     }
 
+    const ensurePct = (val: string) => {
+      const t = val.trim();
+      if (!t) return undefined;
+      return t.includes('%') ? t : `${t}%`;
+    };
+
     setIsSaving(true);
     try {
       const payload = {
@@ -123,12 +136,13 @@ export function PledgeDetailsPage() {
         customerAddress: form.customerAddress.trim() || undefined,
         phoneNumber: form.phoneNumber.trim() || undefined,
         principalAmount: parseFloat(form.principalAmount) || 0,
-        interestRate: form.interestRate.trim() || undefined,
+        interestRate: ensurePct(form.interestRate),
         pledgeDate: form.pledgeDate || undefined,
+        pledgedName: form.pledgedName.trim() || undefined,
         pledgedItemName: form.pledgedItemName.trim() || undefined,
         pledgePlace: form.pledgePlace.trim() || undefined,
         pledgeAmount: parseFloat(form.pledgeAmount) || 0,
-        pledgeInterest: form.pledgeInterest.trim() || undefined,
+        pledgeInterest: ensurePct(form.pledgeInterest),
         status: form.status,
         notes: form.notes.trim() || undefined,
       };
@@ -185,6 +199,7 @@ export function PledgeDetailsPage() {
       principalAmount: p.principal_amount ? String(p.principal_amount) : '',
       interestRate: p.interest_rate || '',
       pledgeDate: p.pledge_date || '',
+      pledgedName: p.pledged_name || '',
       pledgedItemName: p.pledged_item_name || '',
       pledgePlace: p.pledge_place || '',
       pledgeAmount: p.pledge_amount ? String(p.pledge_amount) : '',
@@ -527,13 +542,16 @@ export function PledgeDetailsPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-700">Interest (Customer Interest)</Label>
-                    <Input
-                      placeholder="e.g. 2% / ₹2,000 per month"
-                      value={form.interestRate}
-                      onChange={(e) => setForm({ ...form, interestRate: e.target.value })}
-                      className="h-9 text-xs"
-                    />
+                    <Label className="text-xs font-semibold text-gray-700">Interest (Customer Rate %)</Label>
+                    <div className="relative flex items-center">
+                      <Input
+                        placeholder="e.g. 2.0"
+                        value={form.interestRate}
+                        onChange={(e) => setForm({ ...form, interestRate: e.target.value })}
+                        className="h-9 text-xs pr-8 font-mono font-medium"
+                      />
+                      <span className="absolute right-2.5 text-xs font-bold text-gray-500 select-none pointer-events-none">%</span>
+                    </div>
                   </div>
 
                   <div className="space-y-1.5">
@@ -564,6 +582,16 @@ export function PledgeDetailsPage() {
                       value={form.pledgeDate}
                       onChange={(e) => setForm({ ...form, pledgeDate: e.target.value })}
                       className="h-9 text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-gray-700">Pledged Name (Name on Pledge Slip)</Label>
+                    <Input
+                      placeholder="e.g. Yashwanth / Ramesh Kumar"
+                      value={form.pledgedName}
+                      onChange={(e) => setForm({ ...form, pledgedName: e.target.value })}
+                      className="h-9 text-xs font-medium"
                     />
                   </div>
 
@@ -601,24 +629,27 @@ export function PledgeDetailsPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-700">Pledge Interest</Label>
-                    <Input
-                      placeholder="e.g. 1.2% / ₹1,500/month"
-                      value={form.pledgeInterest}
-                      onChange={(e) => setForm({ ...form, pledgeInterest: e.target.value })}
-                      className="h-9 text-xs"
-                    />
+                    <Label className="text-xs font-semibold text-gray-700">Pledge Interest (% Rate)</Label>
+                    <div className="relative flex items-center">
+                      <Input
+                        placeholder="e.g. 1.2"
+                        value={form.pledgeInterest}
+                        onChange={(e) => setForm({ ...form, pledgeInterest: e.target.value })}
+                        className="h-9 text-xs pr-8 font-mono font-medium"
+                      />
+                      <span className="absolute right-2.5 text-xs font-bold text-gray-500 select-none pointer-events-none">%</span>
+                    </div>
                   </div>
+                </div>
 
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-700">Internal Remarks / Notes</Label>
-                    <Input
-                      placeholder="Loan account number or packet details..."
-                      value={form.notes}
-                      onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                      className="h-9 text-xs"
-                    />
-                  </div>
+                <div className="space-y-1.5 pt-1">
+                  <Label className="text-xs font-semibold text-gray-700">Internal Remarks / Notes</Label>
+                  <Input
+                    placeholder="Loan account number or packet details..."
+                    value={form.notes}
+                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                    className="h-9 text-xs"
+                  />
                 </div>
               </div>
 
@@ -705,13 +736,14 @@ export function PledgeDetailsPage() {
                     <th className="py-2.5 px-3 font-semibold text-center w-12">#</th>
                     <th className="py-2.5 px-3 font-semibold">Date</th>
                     <th className="py-2.5 px-3 font-semibold">Customer & Contact</th>
+                    <th className="py-2.5 px-3 font-semibold">Pledged Name</th>
                     <th className="py-2.5 px-3 font-semibold">Address</th>
                     <th className="py-2.5 px-3 font-semibold text-right">Principal Amt</th>
-                    <th className="py-2.5 px-3 font-semibold text-center">Interest</th>
+                    <th className="py-2.5 px-3 font-semibold text-center">Interest (%)</th>
                     <th className="py-2.5 px-3 font-semibold">Pledged Item</th>
                     <th className="py-2.5 px-3 font-semibold">Pledge Place</th>
                     <th className="py-2.5 px-3 font-semibold text-right">Pledge Amt</th>
-                    <th className="py-2.5 px-3 font-semibold text-center">Pledge Interest</th>
+                    <th className="py-2.5 px-3 font-semibold text-center">Pledge Interest (%)</th>
                     <th className="py-2.5 px-3 font-semibold text-center">Status</th>
                     <th className="py-2.5 px-3 font-semibold text-center w-28">Actions</th>
                   </tr>
@@ -719,13 +751,13 @@ export function PledgeDetailsPage() {
                 <tbody className="divide-y divide-[#E7E2D7] bg-white text-gray-800">
                   {isLoading ? (
                     <tr>
-                      <td colSpan={12} className="py-12 text-center text-gray-500 italic">
+                      <td colSpan={13} className="py-12 text-center text-gray-500 italic">
                         Loading pledge records from database...
                       </td>
                     </tr>
                   ) : pledges.length === 0 ? (
                     <tr>
-                      <td colSpan={12} className="py-12 text-center text-gray-500">
+                      <td colSpan={13} className="py-12 text-center text-gray-500">
                         <AlertCircle className="w-8 h-8 mx-auto text-gray-300 mb-2" />
                         <p className="font-semibold text-gray-700">No pledge records found</p>
                         <p className="text-xs text-gray-400 mt-1">
@@ -751,14 +783,22 @@ export function PledgeDetailsPage() {
                             </div>
                           )}
                         </td>
+                        <td className="py-3 px-3">
+                          <span className="font-bold text-gray-900 block">{p.pledged_name || '—'}</span>
+                          {p.pledged_name && (
+                            <span className="text-[10px] text-gray-400 font-sans">Slip Name</span>
+                          )}
+                        </td>
                         <td className="py-3 px-3 max-w-[180px] truncate text-gray-600" title={p.customer_address || ''}>
                           {p.customer_address || '—'}
                         </td>
                         <td className="py-3 px-3 text-right font-mono font-bold text-gray-900 whitespace-nowrap">
                           {formatRupees(p.principal_amount)}
                         </td>
-                        <td className="py-3 px-3 text-center text-xs font-medium text-amber-900 whitespace-nowrap">
-                          {p.interest_rate || '—'}
+                        <td className="py-3 px-3 text-center whitespace-nowrap">
+                          <span className="inline-block px-2 py-0.5 rounded bg-amber-50 text-amber-900 font-bold border border-amber-200 text-xs font-mono">
+                            {formatPercentage(p.interest_rate)}
+                          </span>
                         </td>
                         <td className="py-3 px-3">
                           <div className="font-medium text-gray-900">{p.pledged_item_name || '—'}</div>
@@ -778,8 +818,10 @@ export function PledgeDetailsPage() {
                         <td className="py-3 px-3 text-right font-mono font-bold text-emerald-800 whitespace-nowrap">
                           {formatRupees(p.pledge_amount)}
                         </td>
-                        <td className="py-3 px-3 text-center text-xs font-medium text-gray-700 whitespace-nowrap">
-                          {p.pledge_interest || '—'}
+                        <td className="py-3 px-3 text-center whitespace-nowrap">
+                          <span className="inline-block px-2 py-0.5 rounded bg-emerald-50 text-emerald-900 font-bold border border-emerald-200 text-xs font-mono">
+                            {formatPercentage(p.pledge_interest)}
+                          </span>
                         </td>
                         <td className="py-3 px-3 text-center whitespace-nowrap">
                           <button
@@ -831,7 +873,7 @@ export function PledgeDetailsPage() {
                 {pledges.length > 0 && (
                   <tfoot className="bg-[#F8F2E4] font-bold text-gray-900 border-t-2 border-[#171717]">
                     <tr>
-                      <td colSpan={4} className="py-2.5 px-3 text-right uppercase text-[11px] tracking-wide">
+                      <td colSpan={5} className="py-2.5 px-3 text-right uppercase text-[11px] tracking-wide">
                         Total ({pledges.length} Records)
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono whitespace-nowrap">

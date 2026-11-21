@@ -451,4 +451,47 @@ describe('Phase 5 - Advanced Logical Domain & Invariant Tests', () => {
     const servicePledges = db.prepare("SELECT COUNT(*) as count FROM service_invoices WHERE invoice_number LIKE '%pledge%'").get() as any;
     expect(servicePledges.count).toBe(0);
   });
+
+  it('pledge record supports pledged_name and interest rates with % symbol', () => {
+    // Insert pledge record with explicit pledged_name and interest rates
+    const insertStmt = db.prepare(`
+      INSERT INTO pledge_records (
+        record_date, customer_name, customer_address, phone_number,
+        principal_amount, interest_rate, pledge_date, pledged_name, pledged_item_name,
+        pledge_place, pledge_amount, pledge_interest, status, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const result = insertStmt.run(
+      '2026-11-21',
+      'Yashwanth',
+      'Bengaluru',
+      '9008477669',
+      100000,
+      '2.0%',
+      '2026-11-21',
+      'Yashwanth Gowda',
+      'Gold Necklace 22K (40g)',
+      'Muthoot Finance',
+      80000,
+      '1.5%',
+      'active',
+      'Pledge slip #MF-98765'
+    );
+
+    const record = db.prepare('SELECT * FROM pledge_records WHERE id = ?').get(result.lastInsertRowid) as any;
+    expect(record.pledged_name).toBe('Yashwanth Gowda');
+    expect(record.customer_name).toBe('Yashwanth');
+    expect(record.interest_rate).toBe('2.0%');
+    expect(record.pledge_interest).toBe('1.5%');
+    expect(record.principal_amount).toBe(100000);
+    expect(record.pledge_amount).toBe(80000);
+
+    // Verify search by pledged_name
+    const searchResult = db.prepare(`
+      SELECT * FROM pledge_records WHERE LOWER(IFNULL(pledged_name, '')) LIKE ?
+    `).all('%gowda%') as any[];
+    expect(searchResult.length).toBeGreaterThanOrEqual(1);
+    expect(searchResult[0].pledged_name).toBe('Yashwanth Gowda');
+  });
 });
