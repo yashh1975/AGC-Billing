@@ -54,6 +54,8 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
       if (filters?.status) {
         query += ' AND s.status = ?';
         params.push(filters.status);
+      } else {
+        query += " AND s.status != 'draft'";
       }
 
       query += ' ORDER BY s.invoice_date DESC, s.id DESC';
@@ -429,6 +431,8 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
       if (filters?.status) {
         query += ' AND p.status = ?';
         params.push(filters.status);
+      } else {
+        query += " AND p.status != 'draft'";
       }
 
       query += ' ORDER BY p.record_date DESC, p.id DESC';
@@ -518,7 +522,7 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
 
         // Allocate AGC internal purchase sequence number (AGC/P/26-27/0001)
         let recordNumber = data.recordNumber;
-        const isFinal = data.status === 'finalized';
+        const isFinal = data.status === 'finalized' || data.status === 'saved';
 
         if (isFinal) {
           if (!recordNumber || recordNumber.startsWith('DRAFT-') || recordNumber.startsWith('EST-')) {
@@ -733,6 +737,8 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
       if (filters?.status) {
         query += ' AND sv.status = ?';
         params.push(filters.status);
+      } else {
+        query += " AND sv.status != 'draft'";
       }
 
       query += ' ORDER BY sv.invoice_date DESC, sv.id DESC';

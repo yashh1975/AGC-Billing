@@ -26,52 +26,52 @@ export function registerDashboardHandlers(ipcMain: IpcMain): void {
 
       // Today's totals
       const todaySales = db.prepare(
-        "SELECT COALESCE(SUM(grand_total), 0) as total FROM sales_invoices WHERE invoice_date = ? AND status != 'cancelled' AND financial_year_id = ?"
+        "SELECT COALESCE(SUM(grand_total), 0) as total FROM sales_invoices WHERE invoice_date = ? AND status NOT IN ('cancelled', 'draft') AND financial_year_id = ?"
       ).get(today, activeFyId) as any;
 
       const todayPurchases = db.prepare(
-        "SELECT COALESCE(SUM(grand_total), 0) as total FROM dealer_purchase_records WHERE record_date = ? AND status != 'cancelled' AND financial_year_id = ?"
+        "SELECT COALESCE(SUM(grand_total), 0) as total FROM dealer_purchase_records WHERE record_date = ? AND status NOT IN ('cancelled', 'draft') AND financial_year_id = ?"
       ).get(today, activeFyId) as any;
 
       const todayServices = db.prepare(
-        "SELECT COALESCE(SUM(grand_total), 0) as total FROM service_invoices WHERE invoice_date = ? AND status != 'cancelled' AND financial_year_id = ?"
+        "SELECT COALESCE(SUM(grand_total), 0) as total FROM service_invoices WHERE invoice_date = ? AND status NOT IN ('cancelled', 'draft') AND financial_year_id = ?"
       ).get(today, activeFyId) as any;
 
       // Monthly totals
       const monthlySales = db.prepare(
-        "SELECT COALESCE(SUM(grand_total), 0) as total FROM sales_invoices WHERE invoice_date >= ? AND status != 'cancelled' AND financial_year_id = ?"
+        "SELECT COALESCE(SUM(grand_total), 0) as total FROM sales_invoices WHERE invoice_date >= ? AND status NOT IN ('cancelled', 'draft') AND financial_year_id = ?"
       ).get(monthStart, activeFyId) as any;
 
       const monthlyPurchases = db.prepare(
-        "SELECT COALESCE(SUM(grand_total), 0) as total FROM dealer_purchase_records WHERE record_date >= ? AND status != 'cancelled' AND financial_year_id = ?"
+        "SELECT COALESCE(SUM(grand_total), 0) as total FROM dealer_purchase_records WHERE record_date >= ? AND status NOT IN ('cancelled', 'draft') AND financial_year_id = ?"
       ).get(monthStart, activeFyId) as any;
 
       const monthlyServices = db.prepare(
-        "SELECT COALESCE(SUM(grand_total), 0) as total FROM service_invoices WHERE invoice_date >= ? AND status != 'cancelled' AND financial_year_id = ?"
+        "SELECT COALESCE(SUM(grand_total), 0) as total FROM service_invoices WHERE invoice_date >= ? AND status NOT IN ('cancelled', 'draft') AND financial_year_id = ?"
       ).get(monthStart, activeFyId) as any;
 
       // Yearly totals (Active Financial Year)
       const yearlySales = db.prepare(
-        "SELECT COALESCE(SUM(grand_total), 0) as total FROM sales_invoices WHERE status != 'cancelled' AND financial_year_id = ?"
+        "SELECT COALESCE(SUM(grand_total), 0) as total FROM sales_invoices WHERE status NOT IN ('cancelled', 'draft') AND financial_year_id = ?"
       ).get(activeFyId) as any;
 
       const yearlyPurchases = db.prepare(
-        "SELECT COALESCE(SUM(grand_total), 0) as total FROM dealer_purchase_records WHERE status != 'cancelled' AND financial_year_id = ?"
+        "SELECT COALESCE(SUM(grand_total), 0) as total FROM dealer_purchase_records WHERE status NOT IN ('cancelled', 'draft') AND financial_year_id = ?"
       ).get(activeFyId) as any;
 
       const yearlyServices = db.prepare(
-        "SELECT COALESCE(SUM(grand_total), 0) as total FROM service_invoices WHERE status != 'cancelled' AND financial_year_id = ?"
+        "SELECT COALESCE(SUM(grand_total), 0) as total FROM service_invoices WHERE status NOT IN ('cancelled', 'draft') AND financial_year_id = ?"
       ).get(activeFyId) as any;
 
       // Total bill counts
       const salesCount = db.prepare(
-        "SELECT COUNT(*) as count FROM sales_invoices WHERE status != 'cancelled' AND financial_year_id = ?"
+        "SELECT COUNT(*) as count FROM sales_invoices WHERE status NOT IN ('cancelled', 'draft') AND financial_year_id = ?"
       ).get(activeFyId) as any;
       const purchaseCount = db.prepare(
-        "SELECT COUNT(*) as count FROM dealer_purchase_records WHERE status != 'cancelled' AND financial_year_id = ?"
+        "SELECT COUNT(*) as count FROM dealer_purchase_records WHERE status NOT IN ('cancelled', 'draft') AND financial_year_id = ?"
       ).get(activeFyId) as any;
       const serviceCount = db.prepare(
-        "SELECT COUNT(*) as count FROM service_invoices WHERE status != 'cancelled' AND financial_year_id = ?"
+        "SELECT COUNT(*) as count FROM service_invoices WHERE status NOT IN ('cancelled', 'draft') AND financial_year_id = ?"
       ).get(activeFyId) as any;
 
       // Outstanding
@@ -87,7 +87,7 @@ export function registerDashboardHandlers(ipcMain: IpcMain): void {
         `SELECT 'sales' as type, invoice_number as doc_number, invoice_date as date, 
          grand_total as amount, payment_status, status, customer_id,
          (SELECT name FROM customers WHERE id = customer_id) as party_name
-         FROM sales_invoices WHERE financial_year_id = ? AND status != 'cancelled'
+         FROM sales_invoices WHERE financial_year_id = ? AND status NOT IN ('cancelled', 'draft')
          ORDER BY created_at DESC LIMIT 10`
       ).all(activeFyId);
 
@@ -95,7 +95,7 @@ export function registerDashboardHandlers(ipcMain: IpcMain): void {
         `SELECT 'purchase' as type, record_number as doc_number, record_date as date,
          grand_total as amount, payment_status, status, supplier_id as party_id,
          (SELECT name FROM suppliers WHERE id = supplier_id) as party_name
-         FROM dealer_purchase_records WHERE financial_year_id = ? AND status != 'cancelled'
+         FROM dealer_purchase_records WHERE financial_year_id = ? AND status NOT IN ('cancelled', 'draft')
          ORDER BY created_at DESC LIMIT 10`
       ).all(activeFyId);
 
@@ -103,7 +103,7 @@ export function registerDashboardHandlers(ipcMain: IpcMain): void {
         `SELECT 'service' as type, invoice_number as doc_number, invoice_date as date,
          grand_total as amount, payment_status, status, customer_id,
          (SELECT name FROM customers WHERE id = customer_id) as party_name
-         FROM service_invoices WHERE financial_year_id = ? AND status != 'cancelled'
+         FROM service_invoices WHERE financial_year_id = ? AND status NOT IN ('cancelled', 'draft')
          ORDER BY created_at DESC LIMIT 10`
       ).all(activeFyId);
 

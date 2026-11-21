@@ -192,7 +192,7 @@ export class ExcelService {
       FROM sales_invoices s
       LEFT JOIN customers c ON s.customer_id = c.id
       LEFT JOIN sales_invoice_items i ON s.id = i.invoice_id
-      WHERE s.status != 'cancelled'
+      WHERE s.status NOT IN ('cancelled', 'draft')
     `;
     const params: any[] = [];
     if (fromDate) { query += ' AND s.invoice_date >= ?'; params.push(fromDate); }
@@ -334,7 +334,7 @@ export class ExcelService {
       FROM dealer_purchase_records p
       LEFT JOIN suppliers s ON p.supplier_id = s.id
       LEFT JOIN dealer_purchase_items i ON p.id = i.purchase_id
-      WHERE 1=1
+      WHERE p.status NOT IN ('cancelled', 'draft')
     `;
     const params: any[] = [];
     if (fromDate) { query += ' AND p.record_date >= ?'; params.push(fromDate); }
@@ -471,7 +471,7 @@ export class ExcelService {
       FROM service_invoices sv
       LEFT JOIN customers c ON sv.customer_id = c.id
       LEFT JOIN service_invoice_items i ON sv.id = i.invoice_id
-      WHERE sv.status != 'cancelled'
+      WHERE sv.status NOT IN ('cancelled', 'draft')
     `;
     const params: any[] = [];
     if (fromDate) { query += ' AND sv.invoice_date >= ?'; params.push(fromDate); }
@@ -566,7 +566,7 @@ export class ExcelService {
              IFNULL(SUM(cgst_amount + sgst_amount + igst_amount) / 100.0, 0) as total_tax,
              IFNULL(SUM(grand_total) / 100.0, 0) as total_amount
       FROM sales_invoices
-      WHERE status != 'cancelled'
+      WHERE status NOT IN ('cancelled', 'draft')
         AND (? IS NULL OR invoice_date >= ?)
         AND (? IS NULL OR invoice_date <= ?)
     `).get(fromDate || null, fromDate || null, toDate || null, toDate || null) as any;
@@ -580,7 +580,7 @@ export class ExcelService {
              IFNULL(SUM(cgst_amount + sgst_amount + igst_amount) / 100.0, 0) as total_tax,
              IFNULL(SUM(grand_total) / 100.0, 0) as total_amount
       FROM service_invoices
-      WHERE status != 'cancelled'
+      WHERE status NOT IN ('cancelled', 'draft')
         AND (? IS NULL OR invoice_date >= ?)
         AND (? IS NULL OR invoice_date <= ?)
     `).get(fromDate || null, fromDate || null, toDate || null, toDate || null) as any;
@@ -594,7 +594,8 @@ export class ExcelService {
              IFNULL(SUM(cgst_amount + sgst_amount + igst_amount) / 100.0, 0) as total_tax,
              IFNULL(SUM(grand_total) / 100.0, 0) as total_amount
       FROM dealer_purchase_records
-      WHERE (? IS NULL OR record_date >= ?)
+      WHERE status NOT IN ('cancelled', 'draft')
+        AND (? IS NULL OR record_date >= ?)
         AND (? IS NULL OR record_date <= ?)
     `).get(fromDate || null, fromDate || null, toDate || null, toDate || null) as any;
 
@@ -759,7 +760,7 @@ export class ExcelService {
              SUM(i.total_value / 100.0) as total_value
       FROM sales_invoice_items i
       JOIN sales_invoices s ON i.invoice_id = s.id
-      WHERE s.status != 'cancelled'
+      WHERE s.status NOT IN ('cancelled', 'draft')
         AND (? IS NULL OR s.invoice_date >= ?)
         AND (? IS NULL OR s.invoice_date <= ?)
       GROUP BY i.hsn_code
@@ -780,7 +781,7 @@ export class ExcelService {
              SUM(i.total_value / 100.0) as total_value
       FROM service_invoice_items i
       JOIN service_invoices sv ON i.invoice_id = sv.id
-      WHERE sv.status != 'cancelled'
+      WHERE sv.status NOT IN ('cancelled', 'draft')
         AND (? IS NULL OR sv.invoice_date >= ?)
         AND (? IS NULL OR sv.invoice_date <= ?)
       GROUP BY i.sac_code

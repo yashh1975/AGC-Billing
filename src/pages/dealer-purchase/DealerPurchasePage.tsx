@@ -186,7 +186,7 @@ export function DealerPurchasePage() {
     'purchase'
   );
 
-  const handleSavePurchase = async (status: 'draft' | 'saved') => {
+  const handleSavePurchase = async (status: 'draft' | 'finalized') => {
     if (!supplierForm.name.trim()) {
       toast({
         title: 'Validation Error',
@@ -254,10 +254,17 @@ export function DealerPurchasePage() {
 
       if (res.success && res.data) {
         toast({
-          title: 'Purchase Record Saved',
-          description: `Internal purchase record ${res.data.record_number} created successfully.`,
+          title: status === 'finalized' ? 'Purchase Record Saved' : 'Draft Saved',
+          description: status === 'finalized'
+            ? `Purchase record ${res.data.record_number} created successfully.`
+            : `Draft ${res.data.record_number} saved successfully.`,
           variant: 'success',
         });
+
+        if (status === 'draft') {
+          navigate('/drafts');
+          return;
+        }
 
         // Immediately fetch the recorded full doc to show preview & save/open PDF modal
         const fullRes = await window.api.db.dealerPurchases.getById(res.data.id);
@@ -312,7 +319,7 @@ export function DealerPurchasePage() {
 
           <Button
             size="sm"
-            onClick={() => handleSavePurchase('saved')}
+            onClick={() => handleSavePurchase('finalized')}
             disabled={isSubmitting}
             className="text-xs flex items-center gap-1.5 font-bold h-8 px-4 bg-[#171717] text-[#C49A35] hover:bg-[#2c2c2c]"
           >
@@ -728,8 +735,8 @@ export function DealerPurchasePage() {
             originalInvoiceDate={originalInvoiceDate}
             items={items}
             notes={notes}
-            onPrint={() => handleSavePurchase('saved')}
-            onSavePdf={() => handleSavePurchase('saved')}
+            onPrint={() => handleSavePurchase('finalized')}
+            onSavePdf={() => handleSavePurchase('finalized')}
             isSaving={isSubmitting}
           />
         </div>

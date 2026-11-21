@@ -167,9 +167,15 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
 
   let titleText = 'TAX INVOICE';
   if (isDraftDoc) {
-    titleText = 'ESTIMATE / DRAFT BILL';
+    if (data.type === 'purchase') {
+      titleText = 'PURCHASE ESTIMATE / QUOTATION';
+    } else if (data.type === 'service') {
+      titleText = 'SERVICE ESTIMATE / QUOTATION';
+    } else {
+      titleText = 'SALES ESTIMATE / QUOTATION';
+    }
   } else if (data.type === 'purchase') {
-    titleText = 'INTERNAL PURCHASE RECORD';
+    titleText = 'DEALER PURCHASE BILL';
   } else if (data.type === 'service') {
     titleText = 'SERVICE TAX INVOICE';
   }
@@ -1078,8 +1084,6 @@ export function formatRecordToPdfData(
     const w = nw > 0 ? nw : gw;
     const baseFallback = isService
       ? (serviceAmountPaise > 0 ? serviceAmountPaise : ratePaise)
-      : isPurchase
-      ? ratePaise * qty
       : (w > 0 ? Math.round(w * ratePaise) : ratePaise * qty);
 
     const taxableValuePaise = parsePaise(

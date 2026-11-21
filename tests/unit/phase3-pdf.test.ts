@@ -109,7 +109,7 @@ describe('Phase 3 - PDF Generation, Folder Vault & WhatsApp Engine', () => {
     const doc = generateInvoicePdf(purchaseData);
     const output = doc.output();
     expect(output).toBeDefined();
-    expect(output).toContain('INTERNAL PURCHASE RECORD');
+    expect(output).toContain('DEALER PURCHASE BILL');
     expect(output).toContain('KB-8899');
   });
 
