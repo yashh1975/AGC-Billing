@@ -303,6 +303,8 @@ export function runMigrations(db: Database.Database): void {
       sac_code TEXT,
       quantity INTEGER NOT NULL DEFAULT 1,
       rate INTEGER NOT NULL DEFAULT 0,
+      principal_amount INTEGER NOT NULL DEFAULT 0,
+      service_amount INTEGER NOT NULL DEFAULT 0,
       discount INTEGER NOT NULL DEFAULT 0,
       taxable_value INTEGER NOT NULL DEFAULT 0,
       gst_rate REAL NOT NULL DEFAULT 0,
@@ -368,6 +370,14 @@ export function runMigrations(db: Database.Database): void {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+
+  // Ensure principal_amount and service_amount columns exist in service_invoice_items
+  try {
+    db.prepare('ALTER TABLE service_invoice_items ADD COLUMN principal_amount INTEGER NOT NULL DEFAULT 0').run();
+  } catch {}
+  try {
+    db.prepare('ALTER TABLE service_invoice_items ADD COLUMN service_amount INTEGER NOT NULL DEFAULT 0').run();
+  } catch {}
 
   try {
     const profileCount = db.prepare('SELECT COUNT(*) as count FROM company_profile').get() as { count: number };

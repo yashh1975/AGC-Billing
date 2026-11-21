@@ -201,6 +201,8 @@ export function InvoicePrintView({ open, onOpenChange, data: initialData, record
     grossWeight: it.grossWeight,
     netWeight: it.netWeight,
     rate: it.ratePaise / 100,
+    principalAmount: (it.principalAmountPaise || 0) / 100,
+    serviceAmount: (it.serviceAmountPaise || 0) / 100,
     makingCharges: (it.makingChargesPaise || 0) / 100,
     discount: (it.discountPaise || 0) / 100,
     gstRate: it.gstRate,
@@ -291,6 +293,7 @@ export function InvoicePrintView({ open, onOpenChange, data: initialData, record
             originalInvoiceDate={data.originalInvoiceDate}
             items={previewItems}
             notes={data.notes}
+            isDraft={data.isDraft}
             onPrint={handleOpenPdf}
             onSavePdf={handleGenerateAndSavePdf}
             isSaving={isGenerating}

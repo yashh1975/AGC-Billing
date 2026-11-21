@@ -122,22 +122,29 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
         let invoiceNumber = data.invoiceNumber;
         const isFinal = data.status === 'finalized';
 
-        if (!invoiceNumber || (isFinal && invoiceNumber.startsWith('DRAFT-'))) {
-          // Allocate real sequence number
-          const seq = db.prepare(
-            "SELECT * FROM document_sequences WHERE category = 'sales' AND financial_year_id = ?"
-          ).get(data.financialYearId) as any;
+        if (isFinal) {
+          if (!invoiceNumber || invoiceNumber.startsWith('DRAFT-') || invoiceNumber.startsWith('EST-')) {
+            // Allocate real statutory sequence number
+            const seq = db.prepare(
+              "SELECT * FROM document_sequences WHERE category = 'sales' AND financial_year_id = ?"
+            ).get(data.financialYearId) as any;
 
-          if (seq) {
-            const nextSeqNum = seq.last_number + 1;
-            db.prepare("UPDATE document_sequences SET last_number = ?, updated_at = datetime('now') WHERE id = ?")
-              .run(nextSeqNum, seq.id);
+            if (seq) {
+              const nextSeqNum = seq.last_number + 1;
+              db.prepare("UPDATE document_sequences SET last_number = ?, updated_at = datetime('now') WHERE id = ?")
+                .run(nextSeqNum, seq.id);
 
-            const fy = db.prepare('SELECT name FROM financial_years WHERE id = ?').get(data.financialYearId) as any;
-            const padded = String(nextSeqNum).padStart(4, '0');
-            invoiceNumber = `${seq.prefix}/${fy?.name || '26-27'}/${padded}`;
-          } else {
-            invoiceNumber = `AGC/S/26-27/${Date.now().toString().slice(-4)}`;
+              const fy = db.prepare('SELECT name FROM financial_years WHERE id = ?').get(data.financialYearId) as any;
+              const padded = String(nextSeqNum).padStart(4, '0');
+              invoiceNumber = `${seq.prefix}/${fy?.name || '26-27'}/${padded}`;
+            } else {
+              invoiceNumber = `AGC/S/26-27/${Date.now().toString().slice(-4)}`;
+            }
+          }
+        } else {
+          // Draft / Estimate mode: NEVER consume statutory sequence counter
+          if (!invoiceNumber || (!invoiceNumber.startsWith('DRAFT-') && !invoiceNumber.startsWith('EST-'))) {
+            invoiceNumber = `EST-S-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
           }
         }
 
@@ -485,20 +492,29 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
 
         // Allocate AGC internal purchase sequence number (AGC/P/26-27/0001)
         let recordNumber = data.recordNumber;
-        if (!recordNumber || recordNumber.startsWith('DRAFT-')) {
-          const seq = db.prepare(
-            "SELECT * FROM document_sequences WHERE category = 'purchase' AND financial_year_id = ?"
-          ).get(data.financialYearId) as any;
+        const isFinal = data.status === 'finalized';
 
-          if (seq) {
-            const nextSeqNum = seq.last_number + 1;
-            db.prepare("UPDATE document_sequences SET last_number = ?, updated_at = datetime('now') WHERE id = ?")
-              .run(nextSeqNum, seq.id);
+        if (isFinal) {
+          if (!recordNumber || recordNumber.startsWith('DRAFT-') || recordNumber.startsWith('EST-')) {
+            const seq = db.prepare(
+              "SELECT * FROM document_sequences WHERE category = 'purchase' AND financial_year_id = ?"
+            ).get(data.financialYearId) as any;
 
-            const fy = db.prepare('SELECT name FROM financial_years WHERE id = ?').get(data.financialYearId) as any;
-            recordNumber = `${seq.prefix}/${fy?.name || '26-27'}/${String(nextSeqNum).padStart(4, '0')}`;
-          } else {
-            recordNumber = `AGC/P/26-27/${Date.now().toString().slice(-4)}`;
+            if (seq) {
+              const nextSeqNum = seq.last_number + 1;
+              db.prepare("UPDATE document_sequences SET last_number = ?, updated_at = datetime('now') WHERE id = ?")
+                .run(nextSeqNum, seq.id);
+
+              const fy = db.prepare('SELECT name FROM financial_years WHERE id = ?').get(data.financialYearId) as any;
+              recordNumber = `${seq.prefix}/${fy?.name || '26-27'}/${String(nextSeqNum).padStart(4, '0')}`;
+            } else {
+              recordNumber = `AGC/P/26-27/${Date.now().toString().slice(-4)}`;
+            }
+          }
+        } else {
+          // Draft / Estimate mode: NEVER consume statutory sequence counter
+          if (!recordNumber || (!recordNumber.startsWith('DRAFT-') && !recordNumber.startsWith('EST-'))) {
+            recordNumber = `EST-P-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
           }
         }
 
@@ -783,20 +799,27 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
         let invoiceNumber = data.invoiceNumber;
         const isFinal = data.status === 'finalized';
 
-        if (!invoiceNumber || (isFinal && invoiceNumber.startsWith('DRAFT-'))) {
-          const seq = db.prepare(
-            "SELECT * FROM document_sequences WHERE category = 'service' AND financial_year_id = ?"
-          ).get(data.financialYearId) as any;
+        if (isFinal) {
+          if (!invoiceNumber || invoiceNumber.startsWith('DRAFT-') || invoiceNumber.startsWith('EST-')) {
+            const seq = db.prepare(
+              "SELECT * FROM document_sequences WHERE category = 'service' AND financial_year_id = ?"
+            ).get(data.financialYearId) as any;
 
-          if (seq) {
-            const nextSeqNum = seq.last_number + 1;
-            db.prepare("UPDATE document_sequences SET last_number = ?, updated_at = datetime('now') WHERE id = ?")
-              .run(nextSeqNum, seq.id);
+            if (seq) {
+              const nextSeqNum = seq.last_number + 1;
+              db.prepare("UPDATE document_sequences SET last_number = ?, updated_at = datetime('now') WHERE id = ?")
+                .run(nextSeqNum, seq.id);
 
-            const fy = db.prepare('SELECT name FROM financial_years WHERE id = ?').get(data.financialYearId) as any;
-            invoiceNumber = `${seq.prefix}/${fy?.name || '26-27'}/${String(nextSeqNum).padStart(4, '0')}`;
-          } else {
-            invoiceNumber = `AGC/SV/26-27/${Date.now().toString().slice(-4)}`;
+              const fy = db.prepare('SELECT name FROM financial_years WHERE id = ?').get(data.financialYearId) as any;
+              invoiceNumber = `${seq.prefix}/${fy?.name || '26-27'}/${String(nextSeqNum).padStart(4, '0')}`;
+            } else {
+              invoiceNumber = `AGC/SV/26-27/${Date.now().toString().slice(-4)}`;
+            }
+          }
+        } else {
+          // Draft / Estimate mode: NEVER consume statutory sequence counter
+          if (!invoiceNumber || (!invoiceNumber.startsWith('DRAFT-') && !invoiceNumber.startsWith('EST-'))) {
+            invoiceNumber = `EST-SV-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
           }
         }
 
@@ -837,30 +860,36 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
 
         const invoiceId = insertInvoice.lastInsertRowid;
 
-        // Insert service line items
+        // Insert service line items with principal_amount and service_amount
         if (Array.isArray(data.items) && data.items.length > 0) {
           const insertItem = db.prepare(`
             INSERT INTO service_invoice_items (
               invoice_id, description, sac_code, quantity, rate, discount, taxable_value,
-              gst_rate, cgst_amount, sgst_amount, igst_amount, total_value, sort_order
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              gst_rate, cgst_amount, sgst_amount, igst_amount, total_value, sort_order,
+              principal_amount, service_amount
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `);
 
           data.items.forEach((item: any, idx: number) => {
+            const principalPaise = item.principalAmountPaise ?? (item.principalAmount ? Math.round(item.principalAmount * 100) : 0);
+            const servicePaise = item.serviceAmountPaise ?? (item.serviceAmount ? Math.round(item.serviceAmount * 100) : (item.ratePaise || 0));
+
             insertItem.run(
               invoiceId,
               item.description,
-              item.sacCode || '9988',
+              item.sacCode || '9971',
               item.quantity || 1,
-              item.ratePaise || 0,
+              servicePaise,
               item.discountPaise || 0,
               item.taxableValuePaise || 0,
-              item.gstRate || 5,
+              item.gstRate || 18,
               item.cgstAmountPaise || 0,
               item.sgstAmountPaise || 0,
               item.igstAmountPaise || 0,
               item.totalValuePaise || 0,
-              idx
+              idx,
+              principalPaise,
+              servicePaise
             );
           });
         }
@@ -1109,6 +1138,125 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
         'SELECT * FROM payments WHERE document_type = ? AND document_id = ? ORDER BY payment_date DESC, id DESC'
       ).all(type, id);
       return { success: true, data: payments };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  // ─── Draft Invoices / Estimation Register Handlers ─────────────────
+  ipcMain.handle('drafts:getAll', async (_event, filters?: { category?: string; search?: string }) => {
+    try {
+      const db = getDb();
+      const allDrafts: any[] = [];
+      const cat = filters?.category || 'all';
+
+      // 1. Sales Drafts
+      if (cat === 'all' || cat === 'sales') {
+        const sales = db.prepare(`
+          SELECT s.id, 'sales' as bill_type, s.invoice_number as document_number, s.invoice_date as document_date,
+                 s.financial_year_id, s.status, s.payment_status,
+                 (s.taxable_amount / 100.0) as taxable_value,
+                 (s.cgst_amount / 100.0) as cgst_amount,
+                 (s.sgst_amount / 100.0) as sgst_amount,
+                 (s.igst_amount / 100.0) as igst_amount,
+                 ((s.cgst_amount + s.sgst_amount + s.igst_amount) / 100.0) as total_tax,
+                 (s.grand_total / 100.0) as total_amount,
+                 (s.amount_received / 100.0) as amount_paid,
+                 (s.balance_due / 100.0) as balance_due,
+                 s.customer_id as party_id, c.name as party_name, c.mobile as party_mobile,
+                 c.gstin as party_gstin
+          FROM sales_invoices s
+          LEFT JOIN customers c ON s.customer_id = c.id
+          WHERE s.status = 'draft'
+          ORDER BY s.id DESC
+        `).all();
+        allDrafts.push(...sales);
+      }
+
+      // 2. Dealer Purchase Drafts
+      if (cat === 'all' || cat === 'purchase') {
+        const purchases = db.prepare(`
+          SELECT p.id, 'purchase' as bill_type, p.record_number as document_number, p.record_date as document_date,
+                 p.financial_year_id, p.status, p.payment_status,
+                 (p.taxable_amount / 100.0) as taxable_value,
+                 (p.cgst_amount / 100.0) as cgst_amount,
+                 (p.sgst_amount / 100.0) as sgst_amount,
+                 (p.igst_amount / 100.0) as igst_amount,
+                 ((p.cgst_amount + p.sgst_amount + p.igst_amount) / 100.0) as total_tax,
+                 (p.grand_total / 100.0) as total_amount,
+                 (p.amount_paid / 100.0) as amount_paid,
+                 (p.balance_due / 100.0) as balance_due,
+                 p.supplier_id as party_id, s.name as party_name, s.mobile as party_mobile,
+                 s.gstin as party_gstin
+          FROM dealer_purchase_records p
+          LEFT JOIN suppliers s ON p.supplier_id = s.id
+          WHERE p.status = 'draft'
+          ORDER BY p.id DESC
+        `).all();
+        allDrafts.push(...purchases);
+      }
+
+      // 3. Service Drafts
+      if (cat === 'all' || cat === 'service') {
+        const services = db.prepare(`
+          SELECT sv.id, 'service' as bill_type, sv.invoice_number as document_number, sv.invoice_date as document_date,
+                 sv.financial_year_id, sv.status, sv.payment_status,
+                 (sv.taxable_amount / 100.0) as taxable_value,
+                 (sv.cgst_amount / 100.0) as cgst_amount,
+                 (sv.sgst_amount / 100.0) as sgst_amount,
+                 (sv.igst_amount / 100.0) as igst_amount,
+                 ((sv.cgst_amount + sv.sgst_amount + sv.igst_amount) / 100.0) as total_tax,
+                 (sv.grand_total / 100.0) as total_amount,
+                 (sv.amount_received / 100.0) as amount_paid,
+                 (sv.balance_due / 100.0) as balance_due,
+                 sv.customer_id as party_id, c.name as party_name, c.mobile as party_mobile,
+                 c.gstin as party_gstin
+          FROM service_invoices sv
+          LEFT JOIN customers c ON sv.customer_id = c.id
+          WHERE sv.status = 'draft'
+          ORDER BY sv.id DESC
+        `).all();
+        allDrafts.push(...services);
+      }
+
+      allDrafts.sort((a, b) => (b.document_date || '').localeCompare(a.document_date || '') || b.id - a.id);
+
+      if (filters?.search && filters.search.trim()) {
+        const term = filters.search.trim().toLowerCase();
+        const filtered = allDrafts.filter(d => 
+          (d.document_number && d.document_number.toLowerCase().includes(term)) ||
+          (d.party_name && d.party_name.toLowerCase().includes(term)) ||
+          (d.party_mobile && d.party_mobile.toLowerCase().includes(term))
+        );
+        return { success: true, data: filtered };
+      }
+
+      return { success: true, data: allDrafts };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('drafts:delete', async (_event, type: 'sales' | 'purchase' | 'service', id: number) => {
+    try {
+      const db = getDb();
+      const deleteTransaction = db.transaction(() => {
+        if (type === 'sales') {
+          db.prepare("DELETE FROM sales_invoice_items WHERE invoice_id = ?").run(id);
+          const res = db.prepare("DELETE FROM sales_invoices WHERE id = ? AND status = 'draft'").run(id);
+          if (res.changes === 0) throw new Error('Sales draft not found or already finalized');
+        } else if (type === 'purchase') {
+          db.prepare("DELETE FROM dealer_purchase_items WHERE record_id = ?").run(id);
+          const res = db.prepare("DELETE FROM dealer_purchase_records WHERE id = ? AND status = 'draft'").run(id);
+          if (res.changes === 0) throw new Error('Purchase draft not found or already finalized');
+        } else if (type === 'service') {
+          db.prepare("DELETE FROM service_invoice_items WHERE invoice_id = ?").run(id);
+          const res = db.prepare("DELETE FROM service_invoices WHERE id = ? AND status = 'draft'").run(id);
+          if (res.changes === 0) throw new Error('Service draft not found or already finalized');
+        }
+      });
+      deleteTransaction();
+      return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message };
     }

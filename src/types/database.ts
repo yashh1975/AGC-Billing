@@ -235,6 +235,10 @@ declare global {
         allBills: {
           getAll: (filters?: Record<string, unknown>) => Promise<ApiResponse<any[]>>;
         };
+        draftBills: {
+          getAll: (filters?: Record<string, unknown>) => Promise<ApiResponse<any[]>>;
+          delete: (type: 'sales' | 'purchase' | 'service', id: number) => Promise<ApiResponse<void>>;
+        };
       };
       search: {
         global: (query: string) => Promise<ApiResponse<any[]>>;

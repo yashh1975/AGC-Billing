@@ -66,10 +66,10 @@ export function ServiceBillingPage() {
 
   // Financial Service presets for AGC (Gold loan takeover, re-pledging, settlement)
   const FINANCIAL_SERVICE_PRESETS = [
-    { label: 'Gold Loan Takeover', desc: 'Gold Loan Takeover & Release Service', sac: '9971', gst: 18 },
-    { label: 'Gold Re-pledging', desc: 'Gold Re-pledging & Documentation Service', sac: '9971', gst: 18 },
-    { label: 'Settlement & Equity Payout', desc: 'Gold Loan Settlement & Balance Equity Payout', sac: '9971', gst: 18 },
-    { label: 'Valuation & Verification', desc: 'Gold Valuation & Purity Verification Service', sac: '9971', gst: 18 },
+    { label: 'Gold Loan Takeover', desc: 'Gold Loan Takeover & Release Service', sac: '9971', principal: 100000, service: 500, gst: 18 },
+    { label: 'Gold Re-pledging', desc: 'Gold Re-pledging & Documentation Service', sac: '9971', principal: 50000, service: 500, gst: 18 },
+    { label: 'Settlement & Equity Payout', desc: 'Gold Loan Settlement & Balance Equity Payout', sac: '9971', principal: 100000, service: 1000, gst: 18 },
+    { label: 'Valuation & Verification', desc: 'Gold Valuation & Purity Verification Service', sac: '9971', principal: 0, service: 500, gst: 18 },
   ];
 
   // Service line items
@@ -79,7 +79,9 @@ export function ServiceBillingPage() {
       category: 'Financial Service',
       sacCode: '9971',
       quantity: 1,
-      rate: 0,
+      principalAmount: 100000,
+      serviceAmount: 500,
+      rate: 500,
       makingCharges: 0,
       otherCharges: 0,
       discount: 0,
@@ -148,7 +150,9 @@ export function ServiceBillingPage() {
         category: 'Financial Service',
         sacCode: '9971',
         quantity: 1,
-        rate: 0,
+        principalAmount: 50000,
+        serviceAmount: 500,
+        rate: 500,
         makingCharges: 0,
         otherCharges: 0,
         discount: 0,
@@ -517,7 +521,9 @@ export function ServiceBillingPage() {
                         category: 'Financial Service',
                         sacCode: preset.sac,
                         quantity: 1,
-                        rate: 0,
+                        principalAmount: preset.principal,
+                        serviceAmount: preset.service,
+                        rate: preset.service,
                         makingCharges: 0,
                         otherCharges: 0,
                         discount: 0,
@@ -534,16 +540,22 @@ export function ServiceBillingPage() {
             </div>
 
             <div className="overflow-x-auto rounded-md border border-[#E7E2D7]">
-              <table className="w-full text-xs text-left min-w-[780px]">
+              <table className="w-full text-xs text-left min-w-[850px]">
                 <thead className="bg-[#F8F2E4] border-b border-[#E7E2D7] text-[#171717]">
                   <tr>
-                    <th className="p-2.5 w-60 min-w-[200px] font-bold">Service Description</th>
-                    <th className="p-2.5 w-24 min-w-[85px] font-bold">SAC</th>
-                    <th className="p-2.5 w-20 min-w-[70px] text-center font-bold">Qty</th>
-                    <th className="p-2.5 w-28 min-w-[110px] text-right font-bold">Rate (₹)</th>
-                    <th className="p-2.5 w-24 min-w-[85px] text-right font-bold">Disc (₹)</th>
-                    <th className="p-2.5 w-20 min-w-[70px] text-center font-bold">GST %</th>
-                    <th className="p-2.5 w-28 min-w-[95px] text-right font-bold">Taxable</th>
+                    <th className="p-2.5 w-56 min-w-[180px] font-bold">Service Description</th>
+                    <th className="p-2.5 w-20 min-w-[70px] font-bold">SAC</th>
+                    <th className="p-2.5 w-32 min-w-[120px] text-right font-bold">
+                      <div>Principal Amt (₹)</div>
+                      <div className="text-[9px] font-normal text-gray-500">(Loan Principal)</div>
+                    </th>
+                    <th className="p-2.5 w-28 min-w-[110px] text-right font-bold">
+                      <div>Service Fee (₹)</div>
+                      <div className="text-[9px] font-normal text-gray-500">(Taxed Amount)</div>
+                    </th>
+                    <th className="p-2.5 w-20 min-w-[75px] text-right font-bold">Disc (₹)</th>
+                    <th className="p-2.5 w-16 min-w-[60px] text-center font-bold">GST %</th>
+                    <th className="p-2.5 w-24 min-w-[90px] text-right font-bold">Taxable (₹)</th>
                     <th className="p-2.5 w-10 text-center"></th>
                   </tr>
                 </thead>
@@ -564,30 +576,41 @@ export function ServiceBillingPage() {
                           <Input
                             value={item.sacCode}
                             onChange={(e) => handleItemChange(idx, 'sacCode', e.target.value)}
-                            className="h-9 text-sm font-mono"
+                            className="h-9 text-sm font-mono text-center"
                           />
                         </td>
                         <td className="p-2">
                           <Input
                             type="number"
-                            min="1"
-                            value={item.quantity}
-                            onChange={(e) =>
-                              handleItemChange(idx, 'quantity', parseInt(e.target.value, 10) || 1)
-                            }
-                            className="h-9 text-sm text-center"
+                            step="1"
+                            placeholder="e.g. 100000"
+                            value={item.principalAmount !== undefined ? item.principalAmount : ''}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 0;
+                              handleItemChange(idx, 'principalAmount', val);
+                            }}
+                            className="h-9 text-sm text-right font-semibold text-emerald-800"
+                            title="Loan Principal Amount (Disbursed/Takeover). Not subject to GST."
                           />
                         </td>
                         <td className="p-2">
                           <Input
                             type="number"
                             step="0.01"
-                            placeholder="0.00"
-                            value={item.rate || ''}
-                            onChange={(e) =>
-                              handleItemChange(idx, 'rate', parseFloat(e.target.value) || 0)
-                            }
-                            className="h-9 text-sm text-right font-medium"
+                            placeholder="500.00"
+                            value={item.serviceAmount !== undefined ? item.serviceAmount : (item.rate || '')}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 0;
+                              const updated = [...items];
+                              updated[idx] = {
+                                ...updated[idx],
+                                serviceAmount: val,
+                                rate: val,
+                              };
+                              setItems(updated);
+                            }}
+                            className="h-9 text-sm text-right font-bold text-[#171717]"
+                            title="Service Facilitation Fee. 18% GST applies strictly on this amount."
                           />
                         </td>
                         <td className="p-2">
@@ -610,10 +633,10 @@ export function ServiceBillingPage() {
                             onChange={(e) =>
                               handleItemChange(idx, 'gstRate', parseFloat(e.target.value) || 0)
                             }
-                            className="h-9 text-sm text-center"
+                            className="h-9 text-sm text-center font-bold"
                           />
                         </td>
-                        <td className="p-2 text-right font-semibold text-[#171717] text-sm">
+                        <td className="p-2 text-right font-bold text-[#171717] text-sm">
                           {formatRupees(calc?.taxableValuePaise)}
                         </td>
                         <td className="p-2 text-center">

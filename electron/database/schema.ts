@@ -315,6 +315,8 @@ export const serviceInvoiceItems = sqliteTable('service_invoice_items', {
   sacCode: text('sac_code'),
   quantity: integer('quantity').notNull().default(1),
   rate: integer('rate').notNull().default(0),                    // paise
+  principalAmount: integer('principal_amount').notNull().default(0), // paise
+  serviceAmount: integer('service_amount').notNull().default(0),     // paise
   discount: integer('discount').notNull().default(0),            // paise
   taxableValue: integer('taxable_value').notNull().default(0),   // paise
   gstRate: real('gst_rate').notNull().default(0),

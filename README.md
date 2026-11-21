@@ -8,7 +8,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Proprietary%20%2F%20AGC-red.svg?style=for-the-badge" alt="License" /></a>
   <img src="https://img.shields.io/badge/Database-SQLite%203%20(Local%20%26%20WAL)-003B57.svg?style=for-the-badge&logo=sqlite" alt="SQLite" />
   <img src="https://img.shields.io/badge/GST-HSN%207113%20%7C%20SAC%209971-success.svg?style=for-the-badge" alt="GST Compliance" />
-  <img src="https://img.shields.io/badge/Tests-50%2F50%20Passed-brightgreen.svg?style=for-the-badge" alt="Tests" />
+  <img src="https://img.shields.io/badge/Tests-52%2F52%20Passed-brightgreen.svg?style=for-the-badge" alt="Tests" />
 </p>
 
 ---
@@ -41,16 +41,28 @@ A specialized desktop billing software tailored for gold jewellery and financial
 
 * **Sales Billing (Gold Jewellery & Articles)**:
   * Full GST tax invoice generation under **HSN 7113** (3% GST).
+  * Accurate gold valuation calculation: `Taxable Value = Net Weight (Grams) × Rate per Gram (₹/g) + Making Charges - Discount`.
   * Automatically calculates **Intra-State (1.5% CGST + 1.5% SGST)** vs. **Inter-State (3% IGST)** based on place of supply.
   * Line-item breakdown: Gross Weight, Net Weight, Rate per Gram, Making Charges, and Discounts.
-  * Built-in mathematical engine calculating in exact integer paise to prevent rounding discrepancies.
-  * Real-time side-by-side **A4 Live Invoice Preview** and instant vector PDF generation.
+  * Built-in mathematical engine calculating in exact integer paise to eliminate rounding discrepancies.
+  * Real-time side-by-side **A4 Live Invoice Preview** and instant industrial-standard vector PDF generation.
   * Direct **WhatsApp Web Sharing** with pre-filled professional customer greeting and invoice details.
 
 * **Financial Services (Gold Loan Takeover, Release & Settlement)**:
   * Statutory service tax invoices under **SAC 9971** (18% GST).
+  * **Strict Separation of Principal vs Service Fee**:
+    * **Principal Amount (Disbursed)**: Loan disbursement or takeover amount paid to release gold (e.g. ₹1,00,000) — displayed for customer reference and reconciliation with **0% GST**.
+    * **Service Amount / Fee**: Facilitation charge (e.g. ₹500) — subject to statutory **18% GST** (9% CGST + 9% SGST = ₹90).
+    * **Total Payable**: ₹590 (service fee + GST), protecting your business from erroneously taxing the ₹1,00,000+ loan principal.
   * Purpose-built presets for **Gold Loan Takeover & Release**, **Re-pledging & Documentation**, **Loan Settlement & Equity Payout**, and **Gold Valuation**.
-  * **Strict Statutory Compliance**: Tax is applied **strictly to the service facilitation fee** (e.g. ₹500 fee $\rightarrow$ ₹590 total invoice with ₹45 CGST + ₹45 SGST), protecting your business from falsely taxing the ₹1,00,000+ principal loan disbursement.
+
+* **Dedicated Draft Bills Section (Estimates / Quotations)**:
+  * Accessible directly from the left navigation bar under **Draft Bill**.
+  * Complete 3-in-1 billing capability: **Sales Draft**, **Financial Service Draft**, and **Dealer Purchase Draft**.
+  * **Zero Statutory Impact**: Draft bills **never consume GST invoice numbers**; instead, they generate reference estimate IDs (`EST-S-...`, `EST-SV-...`, `EST-P-...`).
+  * Explicitly excluded from CA statutory reports, GSTR-1, and financial registers until finalized.
+  * Watermarked as **`ESTIMATE / DRAFT BILL (FOR REFERENCE & ESTIMATION ONLY — NOT A TAX INVOICE)`**.
+  * Full management suite: **View / Print A4**, **Share on WhatsApp**, and **Delete Draft** with confirmation.
 
 * **Dealer Purchase Recording**:
   * Record inward dealer bills with supplier invoice number, dealer invoice date, supplier GSTIN, and gross/net weights.
@@ -206,9 +218,11 @@ Developed with a modern, high-performance desktop architecture:
 * **Spreadsheet Generator**: `exceljs` styled multi-sheet workbooks with statutory GST formulas
 * **Packaging**: `electron-builder` with multi-resolution `.ico` mipmaps and NSIS Windows installer
 
-### Automated Test Suite (50/50 Tests):
+### Automated Test Suite (52/52 Tests):
 The project includes complete end-to-end unit tests verifying:
 * Mathematical GST precision in integer paise (CGST, SGST, IGST)
+* Gold jewellery valuation (`weight × rate per gram + making charges - discount`)
+* Financial service facilitation fee 18% tax calculation and 0% tax on disbursed principal
 * Indian currency formatting and number-to-words engine
 * Multi-page PDF pagination and strict purity exclusion
 * 5-register CA Excel workbook generation

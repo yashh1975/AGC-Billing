@@ -15,6 +15,8 @@ export interface LiveInvoiceItem {
   grossWeight?: number;
   netWeight?: number;
   rate: number; // in Rupees
+  principalAmount?: number; // in Rupees (Loan Principal for Financial Services)
+  serviceAmount?: number; // in Rupees (Facilitation Fee)
   makingCharges?: number;
   discount?: number; // in Rupees
   gstRate: number; // percentage, e.g. 3 or 18
@@ -37,6 +39,7 @@ export interface LiveInvoicePreviewProps {
   items: LiveInvoiceItem[];
   notes?: string;
   companyProfile?: Partial<CompanyProfile>;
+  isDraft?: boolean;
   onPrint?: () => void;
   onSavePdf?: () => void;
   isSaving?: boolean;
@@ -59,6 +62,7 @@ export function LiveInvoicePreview({
   items = [],
   notes = '',
   companyProfile: propCompanyProfile,
+  isDraft = false,
   onPrint,
   onSavePdf,
   isSaving = false,
@@ -104,20 +108,37 @@ export function LiveInvoicePreview({
     let totalIgst = 0;
     let totalGrossWeight = 0;
     let totalNetWeight = 0;
+    let totalPrincipal = 0;
+    let totalServiceFee = 0;
 
     const computedItems = items.map((item, idx) => {
       const qty = Math.max(1, item.quantity || 1);
       const rate = item.rate || 0;
       const making = item.makingCharges || 0;
       const disc = item.discount || 0;
-      const gstPct = item.gstRate || 0;
+      const gstPct = item.gstRate || (type === 'service' ? 18 : 3);
       const gw = item.grossWeight || item.netWeight || 0;
       const nw = item.netWeight || 0;
+      const principal = item.principalAmount || 0;
+      const sFee = item.serviceAmount !== undefined && item.serviceAmount !== null
+        ? item.serviceAmount
+        : (type === 'service' ? rate : 0);
 
       totalGrossWeight += gw;
       totalNetWeight += nw;
+      totalPrincipal += principal;
+      totalServiceFee += sFee;
 
-      const baseAmount = qty * rate + making;
+      let baseAmount = 0;
+      if (type === 'service') {
+        baseAmount = sFee > 0 ? sFee : rate;
+      } else if (nw > 0 || gw > 0) {
+        // Gold rate is per gram: multiply by grams!
+        baseAmount = (nw > 0 ? nw : gw) * rate + making;
+      } else {
+        baseAmount = qty * rate + making;
+      }
+
       const taxable = Math.max(0, baseAmount - disc);
 
       let cgst = 0;
@@ -144,6 +165,8 @@ export function LiveInvoicePreview({
       return {
         ...item,
         index: idx + 1,
+        principalAmount: principal,
+        serviceAmount: sFee,
         baseAmount,
         taxable,
         cgst,
@@ -167,10 +190,12 @@ export function LiveInvoicePreview({
       totalIgst,
       totalGrossWeight,
       totalNetWeight,
+      totalPrincipal,
+      totalServiceFee,
       roundOff,
       grandTotal: roundedTotal,
     };
-  }, [items, isIntraState]);
+  }, [items, isIntraState, type]);
 
   // Format date display (e.g. "17 NOV 2026")
   const formattedDate = useMemo(() => {
@@ -187,12 +212,15 @@ export function LiveInvoicePreview({
     }
   }, [invoiceDate]);
 
-  const documentTitle =
-    type === 'purchase'
-      ? 'INTERNAL PURCHASE RECORD'
-      : type === 'service'
-      ? 'SERVICE TAX INVOICE'
-      : 'TAX INVOICE';
+  const isDraftDoc = Boolean(isDraft || documentNumber?.startsWith('DRAFT') || documentNumber?.startsWith('EST'));
+
+  const documentTitle = isDraftDoc
+    ? 'ESTIMATE / DRAFT BILL'
+    : type === 'purchase'
+    ? 'INTERNAL PURCHASE RECORD'
+    : type === 'service'
+    ? 'SERVICE TAX INVOICE'
+    : 'TAX INVOICE';
 
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -284,16 +312,38 @@ export function LiveInvoicePreview({
         <thead>
           <tr className="border-b border-black bg-white text-black font-extrabold uppercase text-[11px]">
             <th style={{ width: '28px' }} className="py-2.5 px-1 text-center border-r border-black">Sr</th>
-            <th style={{ width: '146px' }} className="py-2.5 px-2 border-r border-black text-left">
-              <div>{type === 'service' ? 'Service Description' : 'Product Name'}</div>
-              <div className="text-[9px] font-normal text-black normal-case">
-                {type === 'service' ? 'SAC Code' : 'HSN / SAC Code'}
-              </div>
-            </th>
-            <th style={{ width: '62px' }} className="py-2.5 px-1 text-center border-r border-black whitespace-nowrap">Gross Wt</th>
-            <th style={{ width: '62px' }} className="py-2.5 px-1 text-center border-r border-black whitespace-nowrap">Net Wt</th>
-            <th style={{ width: '68px' }} className="py-2.5 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">Rate</th>
-            <th style={{ width: '96px' }} className="py-2.5 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">Taxable Value</th>
+            {type === 'service' ? (
+              <>
+                <th style={{ width: '180px' }} className="py-2.5 px-2 border-r border-black text-left">
+                  <div>Service Description</div>
+                  <div className="text-[9px] font-normal text-black normal-case">SAC Code (9971 / 9988)</div>
+                </th>
+                <th style={{ width: '95px' }} className="py-2.5 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+                  <div>Principal Amt</div>
+                  <div className="text-[9px] font-normal text-black normal-case">(Loan/Disbursed)</div>
+                </th>
+                <th style={{ width: '85px' }} className="py-2.5 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+                  <div>Service Fee</div>
+                  <div className="text-[9px] font-normal text-black normal-case">(Facilitation)</div>
+                </th>
+                <th style={{ width: '90px' }} className="py-2.5 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+                  Taxable Value
+                </th>
+              </>
+            ) : (
+              <>
+                <th style={{ width: '146px' }} className="py-2.5 px-2 border-r border-black text-left">
+                  <div>Product Name</div>
+                  <div className="text-[9px] font-normal text-black normal-case">
+                    HSN / SAC Code
+                  </div>
+                </th>
+                <th style={{ width: '62px' }} className="py-2.5 px-1 text-center border-r border-black whitespace-nowrap">Gross Wt</th>
+                <th style={{ width: '62px' }} className="py-2.5 px-1 text-center border-r border-black whitespace-nowrap">Net Wt</th>
+                <th style={{ width: '68px' }} className="py-2.5 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">Rate</th>
+                <th style={{ width: '96px' }} className="py-2.5 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">Taxable Value</th>
+              </>
+            )}
             {isIntraState ? (
               <>
                 <th style={{ width: '72px' }} className="py-2.5 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
@@ -317,7 +367,7 @@ export function LiveInvoicePreview({
         <tbody className="divide-y divide-black">
           {pageItems.length === 0 ? (
             <tr>
-              <td colSpan={isIntraState ? 9 : 8} className="py-8 text-center text-black italic">
+              <td colSpan={isIntraState ? (type === 'service' ? 8 : 9) : (type === 'service' ? 7 : 8)} className="py-8 text-center text-black italic">
                 No items added yet. Add items in the form to see live calculation.
               </td>
             </tr>
@@ -329,24 +379,40 @@ export function LiveInvoicePreview({
                 </td>
                 <td className="py-2.5 px-2 border-r border-black break-words">
                   <span className="font-extrabold text-black uppercase block text-[11px] leading-tight break-words">
-                    {item.description || 'Gold Article'}
+                    {item.description || (type === 'service' ? 'Financial Service / Loan Takeover' : 'Gold Article')}
                   </span>
                   <span className="text-[10px] text-black font-mono block mt-0.5">
                     {type === 'service' ? 'SAC Code' : 'HSN Code'} : {item.sacCode || item.hsnCode || (type === 'service' ? '9971' : '7113')}
                   </span>
                 </td>
-                <td className="py-2.5 px-1 text-center font-bold border-r border-black whitespace-nowrap text-black">
-                  {item.grossWeight ? `${item.grossWeight.toFixed(3)} GMS` : (item.netWeight ? `${item.netWeight.toFixed(3)} GMS` : '—')}
-                </td>
-                <td className="py-2.5 px-1 text-center font-bold border-r border-black whitespace-nowrap text-black">
-                  {item.netWeight ? `${item.netWeight.toFixed(3)} GMS` : '—'}
-                </td>
-                <td className="py-2.5 pr-2 pl-1 text-right font-medium border-r border-black whitespace-nowrap text-black">
-                  ₹{(item.rate || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
-                <td className="py-2.5 pr-2 pl-1 text-right font-bold border-r border-black whitespace-nowrap text-black">
-                  ₹{(item.taxable || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
+                {type === 'service' ? (
+                  <>
+                    <td className="py-2.5 pr-2 pl-1 text-right font-medium border-r border-black whitespace-nowrap text-black">
+                      {item.principalAmount ? `₹${item.principalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+                    </td>
+                    <td className="py-2.5 pr-2 pl-1 text-right font-medium border-r border-black whitespace-nowrap text-black">
+                      ₹{(item.serviceAmount || item.rate || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="py-2.5 pr-2 pl-1 text-right font-bold border-r border-black whitespace-nowrap text-black">
+                      ₹{(item.taxable || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td className="py-2.5 px-1 text-center font-bold border-r border-black whitespace-nowrap text-black">
+                      {item.grossWeight ? `${item.grossWeight.toFixed(3)} GMS` : (item.netWeight ? `${item.netWeight.toFixed(3)} GMS` : '—')}
+                    </td>
+                    <td className="py-2.5 px-1 text-center font-bold border-r border-black whitespace-nowrap text-black">
+                      {item.netWeight ? `${item.netWeight.toFixed(3)} GMS` : '—'}
+                    </td>
+                    <td className="py-2.5 pr-2 pl-1 text-right font-medium border-r border-black whitespace-nowrap text-black">
+                      ₹{(item.rate || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="py-2.5 pr-2 pl-1 text-right font-bold border-r border-black whitespace-nowrap text-black">
+                      ₹{(item.taxable || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </>
+                )}
                 {isIntraState ? (
                   <>
                     <td className="py-2.5 pr-2 pl-1 text-right border-r border-black whitespace-nowrap text-black">
@@ -377,16 +443,32 @@ export function LiveInvoicePreview({
               <td colSpan={2} className="py-2 px-3 border-r border-black uppercase text-left">
                 Total
               </td>
-              <td className="py-2 px-1 text-center border-r border-black whitespace-nowrap">
-                {summary.totalGrossWeight > 0 ? `${summary.totalGrossWeight.toFixed(3)} GMS` : '—'}
-              </td>
-              <td className="py-2 px-1 text-center border-r border-black whitespace-nowrap">
-                {summary.totalNetWeight > 0 ? `${summary.totalNetWeight.toFixed(3)} GMS` : '—'}
-              </td>
-              <td className="py-2 px-1.5 border-r border-black text-center">—</td>
-              <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
-                ₹{summary.totalTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </td>
+              {type === 'service' ? (
+                <>
+                  <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+                    {summary.totalPrincipal > 0 ? `₹${summary.totalPrincipal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+                  </td>
+                  <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+                    {summary.totalServiceFee > 0 ? `₹${summary.totalServiceFee.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+                  </td>
+                  <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+                    ₹{summary.totalTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </>
+              ) : (
+                <>
+                  <td className="py-2 px-1 text-center border-r border-black whitespace-nowrap">
+                    {summary.totalGrossWeight > 0 ? `${summary.totalGrossWeight.toFixed(3)} GMS` : '—'}
+                  </td>
+                  <td className="py-2 px-1 text-center border-r border-black whitespace-nowrap">
+                    {summary.totalNetWeight > 0 ? `${summary.totalNetWeight.toFixed(3)} GMS` : '—'}
+                  </td>
+                  <td className="py-2 px-1.5 border-r border-black text-center">—</td>
+                  <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+                    ₹{summary.totalTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </>
+              )}
               {isIntraState ? (
                 <>
                   <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
@@ -502,10 +584,17 @@ export function LiveInvoicePreview({
                           <h1 className="text-2xl font-black tracking-tight text-black uppercase">
                             {documentTitle}
                           </h1>
+                          {isDraftDoc && (
+                            <div className="text-[10px] font-extrabold text-black uppercase tracking-wider mt-0.5">
+                              FOR REFERENCE & ESTIMATION ONLY — NOT A TAX INVOICE
+                            </div>
+                          )}
 
                           <div className="mt-2 space-y-1 text-xs">
                             <div className="flex items-center gap-4">
-                              <span className="font-semibold text-black w-28 uppercase">NO.</span>
+                              <span className="font-semibold text-black w-28 uppercase">
+                                {isDraftDoc ? 'ESTIMATE NO.' : 'NO.'}
+                              </span>
                               <span className="font-bold text-black">{documentNumber}</span>
                             </div>
                             <div className="flex items-center gap-4">

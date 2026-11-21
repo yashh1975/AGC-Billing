@@ -81,6 +81,10 @@ const api = {
     allBills: {
       getAll: (filters?: Record<string, unknown>) => ipcRenderer.invoke('billing:getAllBills', filters),
     },
+    draftBills: {
+      getAll: (filters?: Record<string, unknown>) => ipcRenderer.invoke('drafts:getAll', filters),
+      delete: (type: 'sales' | 'purchase' | 'service', id: number) => ipcRenderer.invoke('drafts:delete', type, id),
+    },
   },
   search: {
     global: (query: string) => ipcRenderer.invoke('search:global', query),

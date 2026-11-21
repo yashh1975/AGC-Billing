@@ -205,7 +205,12 @@ export function registerSearchHandlers(ipcMain: IpcMain): void {
         `;
         const params: any[] = [];
         if (filters?.fyId) { q += ' AND s.financial_year_id = ?'; params.push(filters.fyId); }
-        if (filters?.status && filters.status !== 'all') { q += ' AND s.status = ?'; params.push(filters.status); }
+        if (filters?.status && filters.status !== 'all') {
+          q += ' AND s.status = ?';
+          params.push(filters.status);
+        } else {
+          q += " AND s.status != 'draft'";
+        }
         if (filters?.paymentStatus && filters.paymentStatus !== 'all') {
           if (filters.paymentStatus === 'due') {
             q += ' AND s.balance_due > 0';
@@ -247,7 +252,12 @@ export function registerSearchHandlers(ipcMain: IpcMain): void {
         `;
         const params: any[] = [];
         if (filters?.fyId) { q += ' AND p.financial_year_id = ?'; params.push(filters.fyId); }
-        if (filters?.status && filters.status !== 'all') { q += ' AND p.status = ?'; params.push(filters.status); }
+        if (filters?.status && filters.status !== 'all') {
+          q += ' AND p.status = ?';
+          params.push(filters.status);
+        } else {
+          q += " AND p.status != 'draft'";
+        }
         if (filters?.paymentStatus && filters.paymentStatus !== 'all') {
           if (filters.paymentStatus === 'due') {
             q += ' AND p.balance_due > 0';
@@ -289,7 +299,12 @@ export function registerSearchHandlers(ipcMain: IpcMain): void {
         `;
         const params: any[] = [];
         if (filters?.fyId) { q += ' AND sv.financial_year_id = ?'; params.push(filters.fyId); }
-        if (filters?.status && filters.status !== 'all') { q += ' AND sv.status = ?'; params.push(filters.status); }
+        if (filters?.status && filters.status !== 'all') {
+          q += ' AND sv.status = ?';
+          params.push(filters.status);
+        } else {
+          q += " AND sv.status != 'draft'";
+        }
         if (filters?.paymentStatus && filters.paymentStatus !== 'all') {
           if (filters.paymentStatus === 'due') {
             q += ' AND sv.balance_due > 0';

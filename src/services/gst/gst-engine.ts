@@ -19,11 +19,13 @@ export interface LineItemInput {
   quantity: number;
   grossWeight?: number;
   netWeight?: number;
-  rate: number; // in Rupees
+  rate: number; // in Rupees (Rate per gram for goods, or Service Fee for services)
+  principalAmount?: number; // in Rupees (Financial Services loan takeover principal amount)
+  serviceAmount?: number; // in Rupees (Financial Services facilitation fee)
   makingCharges?: number; // in Rupees
   otherCharges?: number; // in Rupees
   discount?: number; // in Rupees
-  gstRate: number; // percentage, e.g. 3 for 3%
+  gstRate: number; // percentage, e.g. 3 for 3%, 18 for 18%
   isTaxInclusive?: boolean;
 }
 
@@ -36,6 +38,8 @@ export interface LineItemCalculation {
   grossWeight?: number;
   netWeight?: number;
   ratePaise: number;
+  principalAmountPaise?: number;
+  serviceAmountPaise?: number;
   makingChargesPaise: number;
   otherChargesPaise: number;
   discountPaise: number;
@@ -118,10 +122,32 @@ export function calculateLineItem(
 ): LineItemCalculation {
   const quantity = Math.max(item.quantity || 1, 1);
   const ratePaise = toPaise(item.rate);
+  const principalAmountPaise = toPaise(item.principalAmount);
+  const serviceAmountPaise = item.serviceAmount !== undefined && item.serviceAmount !== null
+    ? toPaise(item.serviceAmount)
+    : (item.sacCode === '9971' || item.category === 'Financial Service' ? ratePaise : 0);
   const makingChargesPaise = toPaise(item.makingCharges);
   const otherChargesPaise = toPaise(item.otherCharges);
   const discountPaise = toPaise(item.discount);
   const gstRate = item.gstRate || 0;
+
+  // Calculate Base Gross Amount in Paise:
+  // 1. If financial service: base amount is strictly the service facilitation charge (principal is never taxed)
+  // 2. If gold article with weight: weight (grams) * rate per gram (paise)
+  // 3. Otherwise: rate * quantity
+  let baseAmountPaise = 0;
+  const isFinancialService = item.sacCode === '9971' || item.category === 'Financial Service' || (item.serviceAmount !== undefined && item.serviceAmount > 0);
+  const weight = (item.netWeight && item.netWeight > 0)
+    ? item.netWeight
+    : ((item.grossWeight && item.grossWeight > 0) ? item.grossWeight : 0);
+
+  if (isFinancialService) {
+    baseAmountPaise = serviceAmountPaise > 0 ? serviceAmountPaise : ratePaise;
+  } else if (weight > 0) {
+    baseAmountPaise = Math.round(weight * ratePaise);
+  } else {
+    baseAmountPaise = ratePaise * quantity;
+  }
 
   let taxableValuePaise = 0;
   let totalValuePaise = 0;
@@ -132,7 +158,7 @@ export function calculateLineItem(
   if (item.isTaxInclusive) {
     // Gross includes taxes: Gross = Taxable * (1 + GST)
     const grossAmountPaise =
-      ratePaise * quantity + makingChargesPaise + otherChargesPaise - discountPaise;
+      baseAmountPaise + makingChargesPaise + otherChargesPaise - discountPaise;
     taxableValuePaise = Math.round((grossAmountPaise * 100) / (100 + gstRate));
     const totalTaxPaise = grossAmountPaise - taxableValuePaise;
 
@@ -150,7 +176,7 @@ export function calculateLineItem(
     // Tax exclusive: Taxable = Base + Making + Other - Discount
     taxableValuePaise = Math.max(
       0,
-      ratePaise * quantity + makingChargesPaise + otherChargesPaise - discountPaise
+      baseAmountPaise + makingChargesPaise + otherChargesPaise - discountPaise
     );
 
     if (supplyType === 'intra') {
@@ -178,6 +204,8 @@ export function calculateLineItem(
     grossWeight: item.grossWeight,
     netWeight: item.netWeight,
     ratePaise,
+    principalAmountPaise,
+    serviceAmountPaise,
     makingChargesPaise,
     otherChargesPaise,
     discountPaise,

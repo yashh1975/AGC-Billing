@@ -99,6 +99,51 @@ describe('Phase 2 - GST Engine & Core Billing Calculations', () => {
       expect(summary.balanceDuePaise).toBe(0);
     });
 
+    it('calculates gold article taxable value as Net Weight * Rate per gram with making charges', () => {
+      // 10.500 grams gold @ ₹7,000/g = ₹73,500 base + ₹1,500 making = ₹75,000 taxable value
+      // 3% GST intra-state (1.5% CGST ₹1,125 + 1.5% SGST ₹1,125 = ₹2,250 tax -> Total ₹77,250)
+      const items = [
+        {
+          description: 'Gold Chain Article',
+          hsnCode: '7113',
+          quantity: 1,
+          netWeight: 10.5,
+          rate: 7000,
+          makingCharges: 1500,
+          discount: 0,
+          gstRate: 3,
+        },
+      ];
+
+      const summary = calculateInvoice(items, 'Karnataka', 'Karnataka');
+      expect(summary.taxableAmountPaise).toBe(7500000); // ₹75,000.00 in paise
+      expect(summary.cgstAmountPaise).toBe(112500); // ₹1,125.00
+      expect(summary.sgstAmountPaise).toBe(112500); // ₹1,125.00
+      expect(summary.grandTotalPaise).toBe(7725000); // ₹77,250.00
+    });
+
+    it('financial service bill applies 18% GST strictly to service fee and ignores loan principal', () => {
+      // ₹1,00,000 Loan Takeover principal, ₹500 Service Fee -> 18% GST on ₹500 = ₹90 tax -> Total ₹590
+      const items = [
+        {
+          description: 'Gold Loan Takeover & Release Service',
+          category: 'Financial Service',
+          sacCode: '9971',
+          quantity: 1,
+          principalAmount: 100000, // ₹1,00,000 loan principal (not taxed!)
+          serviceAmount: 500, // ₹500 facilitation charge
+          rate: 500,
+          gstRate: 18,
+        },
+      ];
+
+      const summary = calculateInvoice(items, 'Karnataka', 'Karnataka');
+      expect(summary.taxableAmountPaise).toBe(50000); // ₹500 in paise
+      expect(summary.cgstAmountPaise).toBe(4500); // ₹45.00 (9%)
+      expect(summary.sgstAmountPaise).toBe(4500); // ₹45.00 (9%)
+      expect(summary.grandTotalPaise).toBe(59000); // ₹590.00
+    });
+
     it.each([
       [14750, 'Fourteen Thousand Seven Hundred and Fifty Rupees Only'],
       [100000, 'One Lakh Rupees Only'],
