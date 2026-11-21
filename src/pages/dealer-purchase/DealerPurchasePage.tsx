@@ -182,7 +182,8 @@ export function DealerPurchasePage() {
     items,
     'Karnataka',
     supplierForm.state || 'Karnataka',
-    amountPaidInput
+    amountPaidInput,
+    'purchase'
   );
 
   const handleSavePurchase = async (status: 'draft' | 'saved') => {

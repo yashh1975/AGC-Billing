@@ -171,7 +171,7 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
   } else if (data.type === 'purchase') {
     titleText = 'INTERNAL PURCHASE RECORD';
   } else if (data.type === 'service') {
-    titleText = 'FINANCIAL SERVICE INVOICE';
+    titleText = 'SERVICE TAX INVOICE';
   }
   doc.text(titleText, margin, curY);
 
@@ -1002,7 +1002,6 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
         '• NO EXCHANGE OR REFUND ON GOODS ONCE SOLD, EXCEPT IN CASE OF MANUFACTURING DEFECTS WITHIN 7 DAYS, WITH ORIGINAL BILL.',
         '• DISCOUNTED ITEMS ARE NOT ELIGIBLE FOR RETURN OR EXCHANGE.',
         '• GOODS MAY BE EXCHANGED OF EQUAL VALUE WITHIN 7 DAYS, SUBJECT TO AVAILABILITY.',
-        '• CHEQUES TO BE DRAWN IN FAVOUR OF ANJANEYA GOLD COMPANY. INTEREST @ 24% P.A. ON DISHONOURED CHEQUES.',
         '• ALL DISPUTES SUBJECT TO BENGALURU JURISDICTION ONLY.',
       ];
 
@@ -1066,16 +1065,26 @@ export function formatRecordToPdfData(
     const qty = Math.max(1, Number(item.quantity) || 1);
     const ratePaise = parsePaise(item.ratePaise ?? item.rate);
     const principalAmountPaise = parsePaise(
-      item.principalAmountPaise ?? item.principal_amount_paise ?? (item.principal_amount !== undefined ? Math.round(item.principal_amount * 100) : item.principalAmount !== undefined ? Math.round(item.principalAmount * 100) : undefined)
+      item.principalAmountPaise ?? item.principal_amount_paise ?? item.principal_amount ?? (item.principalAmount !== undefined ? Math.round(item.principalAmount * 100) : undefined)
     );
     const serviceAmountPaise = parsePaise(
-      item.serviceAmountPaise ?? item.service_amount_paise ?? (item.service_amount !== undefined ? Math.round(item.service_amount * 100) : item.serviceAmount !== undefined ? Math.round(item.serviceAmount * 100) : undefined)
+      item.serviceAmountPaise ?? item.service_amount_paise ?? item.service_amount ?? (item.serviceAmount !== undefined ? Math.round(item.serviceAmount * 100) : undefined)
     );
     const makingChargesPaise = parsePaise(item.makingChargesPaise ?? item.making_charges);
     const discountPaise = parsePaise(item.discountPaise ?? item.discount_amount ?? item.discount);
+
+    const nw = Number(item.net_weight ?? item.netWeight ?? 0);
+    const gw = Number(item.gross_weight ?? item.grossWeight ?? 0);
+    const w = nw > 0 ? nw : gw;
+    const baseFallback = isService
+      ? (serviceAmountPaise > 0 ? serviceAmountPaise : ratePaise)
+      : isPurchase
+      ? ratePaise * qty
+      : (w > 0 ? Math.round(w * ratePaise) : ratePaise * qty);
+
     const taxableValuePaise = parsePaise(
       item.taxableValuePaise ?? item.taxable_value ?? item.taxable_amount,
-      Math.max(0, ratePaise * qty + makingChargesPaise - discountPaise)
+      Math.max(0, baseFallback + makingChargesPaise - discountPaise)
     );
     const cgstAmountPaise = parsePaise(item.cgstAmountPaise ?? item.cgst_amount);
     const sgstAmountPaise = parsePaise(item.sgstAmountPaise ?? item.sgst_amount);

@@ -171,7 +171,8 @@ export function ServiceBillingPage() {
     items,
     'Karnataka',
     placeOfSupply,
-    amountReceivedInput
+    amountReceivedInput,
+    'service'
   );
 
   const handleSaveInvoice = async (status: 'draft' | 'finalized') => {

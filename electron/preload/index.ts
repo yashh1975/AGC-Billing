@@ -84,6 +84,7 @@ const api = {
     draftBills: {
       getAll: (filters?: Record<string, unknown>) => ipcRenderer.invoke('drafts:getAll', filters),
       delete: (type: 'sales' | 'purchase' | 'service', id: number) => ipcRenderer.invoke('drafts:delete', type, id),
+      getNextNumber: () => ipcRenderer.invoke('drafts:getNextNumber'),
     },
   },
   search: {

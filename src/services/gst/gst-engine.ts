@@ -118,7 +118,8 @@ export function determineSupplyType(
  */
 export function calculateLineItem(
   item: LineItemInput,
-  supplyType: 'intra' | 'inter'
+  supplyType: 'intra' | 'inter',
+  docType?: 'sales' | 'purchase' | 'service'
 ): LineItemCalculation {
   const quantity = Math.max(item.quantity || 1, 1);
   const ratePaise = toPaise(item.rate);
@@ -133,17 +134,23 @@ export function calculateLineItem(
 
   // Calculate Base Gross Amount in Paise:
   // 1. If financial service: base amount is strictly the service facilitation charge (principal is never taxed)
-  // 2. If gold article with weight: weight (grams) * rate per gram (paise)
-  // 3. Otherwise: rate * quantity
+  // 2. If dealer purchase / bullion: base amount is rate * quantity (previous standard behavior restored)
+  // 3. If gold sales jewellery with weight: weight (grams) * rate per gram (paise)
+  // 4. Otherwise: rate * quantity
   let baseAmountPaise = 0;
-  const isFinancialService = item.sacCode === '9971' || item.category === 'Financial Service' || (item.serviceAmount !== undefined && item.serviceAmount > 0);
+  const isFinancialService = docType === 'service' || item.sacCode === '9971' || item.category === 'Financial Service' || (item.serviceAmount !== undefined && item.serviceAmount > 0);
+  const isDealerPurchase = docType === 'purchase' || item.category === 'Bullion';
   const weight = (item.netWeight && item.netWeight > 0)
     ? item.netWeight
     : ((item.grossWeight && item.grossWeight > 0) ? item.grossWeight : 0);
 
   if (isFinancialService) {
     baseAmountPaise = serviceAmountPaise > 0 ? serviceAmountPaise : ratePaise;
+  } else if (isDealerPurchase) {
+    // Restored previous dealer purchase calculation: rate * quantity
+    baseAmountPaise = ratePaise * quantity;
   } else if (weight > 0) {
+    // Gold sales jewellery: weight in grams * rate per gram
     baseAmountPaise = Math.round(weight * ratePaise);
   } else {
     baseAmountPaise = ratePaise * quantity;
@@ -225,7 +232,8 @@ export function calculateInvoice(
   items: LineItemInput[],
   companyState: string = 'Karnataka',
   placeOfSupply: string = 'Karnataka',
-  amountReceivedRupees: number = 0
+  amountReceivedRupees: number = 0,
+  docType?: 'sales' | 'purchase' | 'service'
 ): InvoiceCalculationSummary {
   const supplyType = determineSupplyType(companyState, placeOfSupply);
 
@@ -239,7 +247,7 @@ export function calculateInvoice(
   let igstAmountPaise = 0;
 
   const calculatedItems = items.map((item) => {
-    const calc = calculateLineItem(item, supplyType);
+    const calc = calculateLineItem(item, supplyType, docType);
 
     subtotalPaise += calc.ratePaise * calc.quantity;
     totalDiscountPaise += calc.discountPaise;

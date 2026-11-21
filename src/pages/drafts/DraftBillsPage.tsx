@@ -181,6 +181,23 @@ export function DraftBillsPage() {
   }, []);
 
   // Filtered drafts by search query
+  const [nextEstimateNo, setNextEstimateNo] = useState<string>('EST-0001');
+
+  const refreshEstimateNumber = async () => {
+    try {
+      const res = await window.api.db.draftBills.getNextNumber();
+      if (res.success && res.data) {
+        setNextEstimateNo(res.data);
+      }
+    } catch {
+      // fallback
+    }
+  };
+
+  useEffect(() => {
+    refreshEstimateNumber();
+  }, [activeTab]);
+
   const filteredDrafts = useMemo(() => {
     if (!searchQuery.trim()) return drafts;
     const term = searchQuery.trim().toLowerCase();
@@ -365,7 +382,8 @@ export function DraftBillsPage() {
     currentItems,
     'Karnataka',
     placeOfSupply,
-    0
+    0,
+    draftType
   );
 
   // Convert items for LiveInvoicePreview
@@ -418,6 +436,7 @@ export function DraftBillsPage() {
       let res: any = null;
       if (draftType === 'sales') {
         res = await window.api.db.salesInvoices.create({
+          invoiceNumber: nextEstimateNo,
           financialYearId: activeYear.id,
           customer: partyForm,
           invoiceDate: draftDate,
@@ -440,6 +459,7 @@ export function DraftBillsPage() {
         });
       } else if (draftType === 'service') {
         res = await window.api.db.serviceInvoices.create({
+          invoiceNumber: nextEstimateNo,
           financialYearId: activeYear.id,
           customer: partyForm,
           invoiceDate: draftDate,
@@ -462,6 +482,7 @@ export function DraftBillsPage() {
         });
       } else if (draftType === 'purchase') {
         res = await window.api.db.dealerPurchases.create({
+          recordNumber: nextEstimateNo,
           financialYearId: activeYear.id,
           supplier: partyForm,
           recordDate: draftDate,
@@ -487,9 +508,10 @@ export function DraftBillsPage() {
       if (res && res.success) {
         toast({
           title: 'Draft Bill Created',
-          description: `Draft reference recorded successfully.`,
+          description: `Draft reference ${res.data?.invoice_number || res.data?.record_number || nextEstimateNo} recorded successfully.`,
           variant: 'success',
         });
+        await refreshEstimateNumber();
         setActiveTab('list');
         loadDrafts();
       } else {
@@ -1065,7 +1087,7 @@ export function DraftBillsPage() {
             <div className="lg:col-span-5 lg:sticky lg:top-4">
               <LiveInvoicePreview
                 type={draftType}
-                documentNumber={`EST-${draftType === 'sales' ? 'S' : draftType === 'service' ? 'SV' : 'P'}-DRAFT`}
+                documentNumber={nextEstimateNo}
                 invoiceDate={draftDate}
                 partyName={partyForm.name}
                 partyMobile={partyForm.mobile}

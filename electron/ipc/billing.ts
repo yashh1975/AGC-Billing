@@ -2,6 +2,32 @@ import { IpcMain } from 'electron';
 import { getDb } from '../database';
 
 export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
+  // Helper to generate clean, sequential estimate numbers: EST-0001, EST-0002...
+  function getNextEstimateNumber(db: any): string {
+    try {
+      const rows = db.prepare(`
+        SELECT invoice_number as num FROM sales_invoices WHERE invoice_number LIKE 'EST-%'
+        UNION ALL
+        SELECT invoice_number as num FROM service_invoices WHERE invoice_number LIKE 'EST-%'
+        UNION ALL
+        SELECT record_number as num FROM dealer_purchase_records WHERE record_number LIKE 'EST-%'
+      `).all() as { num: string }[];
+
+      let maxSeq = 0;
+      for (const r of rows) {
+        if (!r.num) continue;
+        const match = r.num.match(/^EST-(\d+)$/i);
+        if (match) {
+          const val = parseInt(match[1], 10);
+          if (val > maxSeq && val < 100000) maxSeq = val;
+        }
+      }
+      const nextSeq = maxSeq + 1;
+      return `EST-${String(nextSeq).padStart(4, '0')}`;
+    } catch {
+      return 'EST-0001';
+    }
+  }
   // ─────────────────────────────────────────────────────────────────
   // SALES INVOICES
   // ─────────────────────────────────────────────────────────────────
@@ -143,8 +169,8 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
           }
         } else {
           // Draft / Estimate mode: NEVER consume statutory sequence counter
-          if (!invoiceNumber || (!invoiceNumber.startsWith('DRAFT-') && !invoiceNumber.startsWith('EST-'))) {
-            invoiceNumber = `EST-S-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
+          if (!invoiceNumber || invoiceNumber === 'EST-DRAFT' || (!invoiceNumber.startsWith('DRAFT-') && !invoiceNumber.startsWith('EST-'))) {
+            invoiceNumber = getNextEstimateNumber(db);
           }
         }
 
@@ -513,8 +539,8 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
           }
         } else {
           // Draft / Estimate mode: NEVER consume statutory sequence counter
-          if (!recordNumber || (!recordNumber.startsWith('DRAFT-') && !recordNumber.startsWith('EST-'))) {
-            recordNumber = `EST-P-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
+          if (!recordNumber || recordNumber === 'EST-DRAFT' || (!recordNumber.startsWith('DRAFT-') && !recordNumber.startsWith('EST-'))) {
+            recordNumber = getNextEstimateNumber(db);
           }
         }
 
@@ -818,8 +844,8 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
           }
         } else {
           // Draft / Estimate mode: NEVER consume statutory sequence counter
-          if (!invoiceNumber || (!invoiceNumber.startsWith('DRAFT-') && !invoiceNumber.startsWith('EST-'))) {
-            invoiceNumber = `EST-SV-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
+          if (!invoiceNumber || invoiceNumber === 'EST-DRAFT' || (!invoiceNumber.startsWith('DRAFT-') && !invoiceNumber.startsWith('EST-'))) {
+            invoiceNumber = getNextEstimateNumber(db);
           }
         }
 
@@ -1257,6 +1283,15 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
       });
       deleteTransaction();
       return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('drafts:getNextNumber', async () => {
+    try {
+      const db = getDb();
+      return { success: true, data: getNextEstimateNumber(db) };
     } catch (error: any) {
       return { success: false, error: error.message };
     }
