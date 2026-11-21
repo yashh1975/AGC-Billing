@@ -231,7 +231,27 @@ export function LiveInvoicePreview({
 
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const [scaleMode, setScaleMode] = useState<'100' | 'fit'>('100');
-  const [scale, setScale] = useState(1);
+  const [fitScale, setFitScale] = useState(0.75);
+
+  useEffect(() => {
+    if (!previewContainerRef.current) return;
+    const updateScale = () => {
+      if (previewContainerRef.current) {
+        const availableW = previewContainerRef.current.clientWidth - 16;
+        if (availableW > 0) {
+          // Standard A4 pixel width at 96 DPI is 794px
+          const s = Math.max(0.35, Math.min(1, availableW / 794));
+          setFitScale(s);
+        }
+      }
+    };
+    updateScale();
+    const ro = new ResizeObserver(updateScale);
+    ro.observe(previewContainerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  const scale = scaleMode === '100' ? 1.0 : fitScale;
 
   // Multi-page chunking matching PDF engine
   const pages = useMemo(() => {
@@ -296,27 +316,6 @@ export function LiveInvoicePreview({
     return chunks;
   }, [summary.items]);
 
-  useEffect(() => {
-    if (scaleMode === '100') {
-      setScale(1);
-      return;
-    }
-    if (!previewContainerRef.current) return;
-    const updateScale = () => {
-      if (previewContainerRef.current) {
-        const availableW = previewContainerRef.current.clientWidth - 16;
-        if (availableW > 0) {
-          // Standard A4 pixel width at 96 DPI is 794px
-          const s = Math.max(0.35, Math.min(1, availableW / 794));
-          setScale(s);
-        }
-      }
-    };
-    updateScale();
-    const ro = new ResizeObserver(updateScale);
-    ro.observe(previewContainerRef.current);
-    return () => ro.disconnect();
-  }, [scaleMode]);
 
   const renderTable = (pageItems: typeof summary.items, isLastPage: boolean) => (
     <table className="mt-5 w-full table-fixed text-left text-xs border border-black border-collapse bg-white">
@@ -539,7 +538,7 @@ export function LiveInvoicePreview({
               className={`px-2.5 py-1 transition-colors border-l border-black ${scaleMode === 'fit' ? 'bg-black text-white font-bold' : 'text-black hover:bg-gray-200'}`}
               title="Scale to fit container"
             >
-              Fit Screen ({Math.round(scale * 100)}%)
+              Fit Screen ({Math.round(fitScale * 100)}%)
             </button>
           </div>
         </div>
@@ -572,7 +571,7 @@ export function LiveInvoicePreview({
       </div>
 
       {/* A4 Paper Sheets Preview Container */}
-      <div ref={previewContainerRef} className="w-full flex flex-col items-center overflow-x-auto pb-4 gap-4 min-w-0">
+      <div ref={previewContainerRef} className="w-full flex flex-col items-start overflow-x-auto pb-4 gap-4 min-w-0">
         {pages.map((page, pIdx) => (
           <div
             key={page.pageIndex}

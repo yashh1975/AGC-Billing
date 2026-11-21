@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -86,6 +86,23 @@ export function SalesBillingPage() {
 
   // Actions state
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentDocNumber, setCurrentDocNumber] = useState('');
+
+  const loadNextDocNumber = useCallback(async () => {
+    if (!activeYear) return;
+    try {
+      const res = await window.api.db.documentSequences.peekNext('sales', activeYear.id);
+      if (res.success && res.data?.documentNumber) {
+        setCurrentDocNumber(res.data.documentNumber);
+      }
+    } catch (err) {
+      console.error('Failed to peek next sales sequence number:', err);
+    }
+  }, [activeYear]);
+
+  useEffect(() => {
+    loadNextDocNumber();
+  }, [loadNextDocNumber]);
 
   useEffect(() => {
     async function loadMasters() {
@@ -245,6 +262,7 @@ export function SalesBillingPage() {
         });
 
         if (status === 'finalized') {
+          loadNextDocNumber();
           // Immediately fetch the recorded full doc to show preview & save/open PDF modal
           const fullRes = await window.api.db.salesInvoices.getById(res.data.id);
           if (fullRes.success && fullRes.data) {
@@ -719,7 +737,7 @@ export function SalesBillingPage() {
         <div className={`lg:col-span-5 min-w-0 lg:sticky lg:top-4 ${activeTab === 'form' ? 'hidden lg:block' : 'block'}`}>
           <LiveInvoicePreview
             type="sales"
-            documentNumber={activeYear ? `INV/${activeYear.name}/0001` : 'INV/2026-27/0001'}
+            documentNumber={currentDocNumber || (activeYear ? `AGC/S/${activeYear.name}/0001` : 'AGC/S/26-27/0001')}
             invoiceDate={invoiceDate}
             partyName={customerForm.name}
             partyMobile={customerForm.mobile}

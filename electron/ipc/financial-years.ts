@@ -130,4 +130,35 @@ export function registerFinancialYearHandlers(ipcMain: IpcMain): void {
       return { success: false, error: error.message };
     }
   });
+
+  ipcMain.handle('sequences:peekNext', async (_event, category: string, fyId: number) => {
+    try {
+      const db = getDb();
+      const seq = db.prepare(
+        'SELECT * FROM document_sequences WHERE category = ? AND financial_year_id = ?'
+      ).get(category, fyId) as any;
+
+      const fy = db.prepare('SELECT name FROM financial_years WHERE id = ?').get(fyId) as any;
+      const fyName = fy?.name || '26-27';
+
+      if (!seq) {
+        const defaultPrefix = category === 'sales' ? 'AGC/S' : (category === 'service' ? 'AGC/SV' : 'AGC/P');
+        return {
+          success: true,
+          data: { number: 1, documentNumber: `${defaultPrefix}/${fyName}/0001`, prefix: defaultPrefix, fyName }
+        };
+      }
+
+      const nextNumber = (seq.last_number || 0) + 1;
+      const paddedNumber = String(nextNumber).padStart(4, '0');
+      const documentNumber = `${seq.prefix}/${fyName}/${paddedNumber}`;
+
+      return {
+        success: true,
+        data: { number: nextNumber, documentNumber, prefix: seq.prefix, fyName }
+      };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
 }

@@ -209,6 +209,7 @@ declare global {
         };
         documentSequences: {
           getNext: (category: string, fyId: number) => Promise<ApiResponse>;
+          peekNext: (category: string, fyId: number) => Promise<ApiResponse<{ number: number; documentNumber: string; prefix: string; fyName: string }>>;
         };
         taxRates: {
           getAll: () => Promise<ApiResponse<TaxRate[]>>;

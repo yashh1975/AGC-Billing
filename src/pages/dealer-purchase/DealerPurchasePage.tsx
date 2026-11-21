@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -86,6 +86,23 @@ export function DealerPurchasePage() {
   ]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentDocNumber, setCurrentDocNumber] = useState('');
+
+  const loadNextDocNumber = useCallback(async () => {
+    if (!activeYear) return;
+    try {
+      const res = await window.api.db.documentSequences.peekNext('purchase', activeYear.id);
+      if (res.success && res.data?.documentNumber) {
+        setCurrentDocNumber(res.data.documentNumber);
+      }
+    } catch (err) {
+      console.error('Failed to peek next purchase sequence number:', err);
+    }
+  }, [activeYear]);
+
+  useEffect(() => {
+    loadNextDocNumber();
+  }, [loadNextDocNumber]);
 
   useEffect(() => {
     async function loadSuppliers() {
@@ -266,6 +283,7 @@ export function DealerPurchasePage() {
           return;
         }
 
+        loadNextDocNumber();
         // Immediately fetch the recorded full doc to show preview & save/open PDF modal
         const fullRes = await window.api.db.dealerPurchases.getById(res.data.id);
         if (fullRes.success && fullRes.data) {
@@ -722,7 +740,7 @@ export function DealerPurchasePage() {
         <div className={`lg:col-span-5 min-w-0 lg:sticky lg:top-4 ${activeTab === 'form' ? 'hidden lg:block' : 'block'}`}>
           <LiveInvoicePreview
             type="purchase"
-            documentNumber={activeYear ? `PUR/${activeYear.name}/0001` : 'PUR/2026-27/0001'}
+            documentNumber={currentDocNumber || (activeYear ? `AGC/P/${activeYear.name}/0001` : 'AGC/P/26-27/0001')}
             invoiceDate={recordDate}
             partyName={supplierForm.name}
             partyMobile={supplierForm.mobile}

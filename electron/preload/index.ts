@@ -55,6 +55,7 @@ const api = {
     },
     documentSequences: {
       getNext: (category: string, fyId: number) => ipcRenderer.invoke('sequences:getNext', category, fyId),
+      peekNext: (category: string, fyId: number) => ipcRenderer.invoke('sequences:peekNext', category, fyId),
     },
     taxRates: {
       getAll: () => ipcRenderer.invoke('tax:getAll'),
