@@ -12,6 +12,7 @@ import {
   BarChart3,
   FolderOpen,
   Settings,
+  Landmark,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import logoUrl from '@/assets/logo/agc-logo-circular.png';
@@ -28,6 +29,7 @@ const navItems: NavItem[] = [
   { name: 'Sales Billing', to: '/sales', icon: Receipt },
   { name: 'Service Billing', to: '/service', icon: Wrench },
   { name: 'Draft Bill', to: '/draft-bills', icon: FileEdit },
+  { name: 'Pledge Details', to: '/pledge-details', icon: Landmark },
   { name: 'Customers', to: '/customers', icon: Users },
   { name: 'Suppliers', to: '/suppliers', icon: Truck },
   { name: 'All Bills', to: '/all-bills', icon: FileText },

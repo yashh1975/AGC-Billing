@@ -87,6 +87,14 @@ const api = {
       delete: (type: 'sales' | 'purchase' | 'service', id: number) => ipcRenderer.invoke('drafts:delete', type, id),
       getNextNumber: () => ipcRenderer.invoke('drafts:getNextNumber'),
     },
+    pledges: {
+      getAll: (filters?: Record<string, unknown>) => ipcRenderer.invoke('pledges:getAll', filters),
+      getById: (id: number) => ipcRenderer.invoke('pledges:getById', id),
+      create: (data: Record<string, unknown>) => ipcRenderer.invoke('pledges:create', data),
+      update: (id: number, data: Record<string, unknown>) => ipcRenderer.invoke('pledges:update', id, data),
+      delete: (id: number) => ipcRenderer.invoke('pledges:delete', id),
+      exportExcel: () => ipcRenderer.invoke('pledges:exportExcel'),
+    },
   },
   search: {
     global: (query: string) => ipcRenderer.invoke('search:global', query),

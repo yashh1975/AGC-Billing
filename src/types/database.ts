@@ -106,6 +106,27 @@ export interface DashboardSummary {
   totalBills: number;
   outstandingAmount: number;
   recentTransactions: RecentTransaction[];
+  pledgedPeopleCount?: number;
+  activePledgesCount?: number;
+}
+
+export interface PledgeRecord {
+  id: number;
+  record_date: string;
+  customer_name: string;
+  customer_address: string | null;
+  phone_number: string | null;
+  principal_amount: number;
+  interest_rate: string | null;
+  pledge_date: string | null;
+  pledged_item_name: string | null;
+  pledge_place: string | null;
+  pledge_amount: number;
+  pledge_interest: string | null;
+  status: 'active' | 'released' | 'closed' | string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface RecentTransaction {
@@ -240,6 +261,23 @@ declare global {
           getAll: (filters?: Record<string, unknown>) => Promise<ApiResponse<any[]>>;
           delete: (type: 'sales' | 'purchase' | 'service', id: number) => Promise<ApiResponse<void>>;
           getNextNumber: () => Promise<ApiResponse<string>>;
+        };
+        pledges: {
+          getAll: (filters?: Record<string, unknown>) => Promise<ApiResponse<{
+            records: PledgeRecord[];
+            stats: {
+              totalPledges: number;
+              distinctPeople: number;
+              activePledges: number;
+              totalPrincipal: number;
+              totalPledgeAmount: number;
+            };
+          }>>;
+          getById: (id: number) => Promise<ApiResponse<PledgeRecord>>;
+          create: (data: Record<string, unknown>) => Promise<ApiResponse<PledgeRecord>>;
+          update: (id: number, data: Record<string, unknown>) => Promise<ApiResponse<PledgeRecord>>;
+          delete: (id: number) => Promise<ApiResponse<{ id: number }>>;
+          exportExcel: () => Promise<ApiResponse<{ filePath: string; fileName: string; totalRecords: number }>>;
         };
       };
       search: {

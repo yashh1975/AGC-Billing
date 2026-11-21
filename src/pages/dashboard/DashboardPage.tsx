@@ -14,6 +14,7 @@ import {
   ArrowRight,
   Clock,
   Layers,
+  Landmark,
 } from 'lucide-react';
 import type { DashboardSummary } from '@/types/database';
 import { useFinancialYear } from '@/hooks/useFinancialYear';
@@ -105,6 +106,16 @@ export function DashboardPage() {
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
             GST Reports
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/pledge-details')}
+            className="text-xs flex items-center gap-1.5"
+          >
+            <Landmark className="w-3.5 h-3.5 text-[#C49A35]" />
+            Pledge Details
           </Button>
         </div>
       </div>
@@ -217,7 +228,7 @@ export function DashboardPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white/80 p-3 rounded-md border border-[#E7E2D7]/60 flex items-center justify-between">
               <div>
                 <span className="text-[11px] uppercase tracking-wide text-gray-500 font-medium block">
@@ -257,6 +268,27 @@ export function DashboardPage() {
               </div>
               <div className="p-2 rounded-full bg-emerald-50 text-emerald-700">
                 <Wrench className="w-4 h-4" />
+              </div>
+            </div>
+
+            <div
+              onClick={() => navigate('/pledge-details')}
+              className="bg-white/80 p-3 rounded-md border border-[#E7E2D7]/60 flex items-center justify-between cursor-pointer hover:border-[#C49A35] hover:bg-amber-50/30 transition-all group"
+              title="Click to view full Pledge Details Registry"
+            >
+              <div>
+                <span className="text-[11px] uppercase tracking-wide text-gray-500 font-medium block group-hover:text-[#A98226]">
+                  People Pledged
+                </span>
+                <span className="text-base font-bold text-[#171717] font-mono">
+                  {isLoading ? '...' : summary?.pledgedPeopleCount ?? 0}
+                </span>
+                <span className="text-[10px] text-gray-400 block">
+                  {summary?.activePledgesCount ?? 0} active
+                </span>
+              </div>
+              <div className="p-2 rounded-full bg-amber-100 text-amber-800 group-hover:scale-105 transition-transform">
+                <Landmark className="w-4 h-4" />
               </div>
             </div>
           </div>

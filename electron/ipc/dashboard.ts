@@ -111,6 +111,17 @@ export function registerDashboardHandlers(ipcMain: IpcMain): void {
         .sort((a: any, b: any) => b.date.localeCompare(a.date))
         .slice(0, 10);
 
+      // Pledge records statistics (Strictly isolated from CA and billing registers)
+      let pledgedPeopleCount = 0;
+      let activePledgesCount = 0;
+      try {
+        const pledgeStats = db.prepare(
+          "SELECT COUNT(DISTINCT customer_name) as distinctPeople, COUNT(*) as totalActive FROM pledge_records WHERE status = 'active'"
+        ).get() as any;
+        pledgedPeopleCount = pledgeStats?.distinctPeople || 0;
+        activePledgesCount = pledgeStats?.totalActive || 0;
+      } catch {}
+
       return {
         success: true,
         data: {
@@ -126,6 +137,8 @@ export function registerDashboardHandlers(ipcMain: IpcMain): void {
           totalBills: salesCount.count + purchaseCount.count + serviceCount.count,
           outstandingAmount: salesOutstanding.total + serviceOutstanding.total,
           recentTransactions: allRecent,
+          pledgedPeopleCount,
+          activePledgesCount,
         },
       };
     } catch (error: any) {

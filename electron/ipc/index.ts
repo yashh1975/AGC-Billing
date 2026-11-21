@@ -12,6 +12,7 @@ import { registerPdfIpcHandlers } from './pdf';
 import { registerSearchHandlers } from './search';
 import { registerExcelIpcHandlers } from './excel';
 import { registerBackupIpcHandlers } from './backup';
+import { registerPledgesHandlers } from './pledges';
 
 export function registerAllIpcHandlers(ipcMain: IpcMain): void {
   registerAuthHandlers(ipcMain);
@@ -27,4 +28,5 @@ export function registerAllIpcHandlers(ipcMain: IpcMain): void {
   registerSearchHandlers(ipcMain);
   registerExcelIpcHandlers(ipcMain);
   registerBackupIpcHandlers(ipcMain);
+  registerPledgesHandlers(ipcMain);
 }

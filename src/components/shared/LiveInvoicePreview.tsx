@@ -133,8 +133,9 @@ export function LiveInvoicePreview({
       if (type === 'service') {
         baseAmount = sFee > 0 ? sFee : rate;
       } else if (type === 'purchase') {
-        // Restored previous dealer purchase calculation: rate * quantity
-        baseAmount = qty * rate + making;
+        // Dealer purchase: taxable value = rate * (net weight || gross weight), or rate * qty if weight not specified
+        const w = nw > 0 ? nw : gw;
+        baseAmount = w > 0 ? w * rate + making : qty * rate + making;
       } else if (nw > 0 || gw > 0) {
         // Gold sales jewellery: weight in grams * rate per gram
         baseAmount = (nw > 0 ? nw : gw) * rate + making;

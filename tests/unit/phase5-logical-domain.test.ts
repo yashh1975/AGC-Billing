@@ -350,4 +350,105 @@ describe('Phase 5 - Advanced Logical Domain & Invariant Tests', () => {
     expect(logs[0].username).toBe('audit_tester');
     expect(logs[0].display_name).toBe('Auditor');
   });
+
+  // ─────────────────────────────────────────────────────────────────
+  // 8. PLEDGE DETAILS ISOLATION & REGISTRY TESTS
+  // ─────────────────────────────────────────────────────────────────
+  it('pledge_records table stores full pledge details and isolates them from billing registers and CA exports', () => {
+    // 1. Insert pledge records
+    db.prepare(`
+      INSERT INTO pledge_records (
+        record_date, customer_name, customer_address, phone_number,
+        principal_amount, interest_rate, pledge_date, pledged_item_name,
+        pledge_place, pledge_amount, pledge_interest, status, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      '2026-11-21',
+      'Ramesh Kumar',
+      '#10, Malleshwaram, Bengaluru',
+      '9845012345',
+      100000,
+      '2% per month',
+      '2026-11-15',
+      'Gold Necklace 22K (35g)',
+      'Muthoot Finance',
+      85000,
+      '1.5% per month',
+      'active',
+      'Initial loan takeover pledge'
+    );
+
+    // Second pledge for the same person
+    db.prepare(`
+      INSERT INTO pledge_records (
+        record_date, customer_name, customer_address, phone_number,
+        principal_amount, interest_rate, pledge_date, pledged_item_name,
+        pledge_place, pledge_amount, pledge_interest, status, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      '2026-11-21',
+      'Ramesh Kumar',
+      '#10, Malleshwaram, Bengaluru',
+      '9845012345',
+      50000,
+      '2% per month',
+      '2026-11-18',
+      '2 Gold Bangles 22K (25g)',
+      'Manappuram Finance',
+      42000,
+      '1.6% per month',
+      'active',
+      'Additional collateral'
+    );
+
+    // Third pledge for another person
+    db.prepare(`
+      INSERT INTO pledge_records (
+        record_date, customer_name, customer_address, phone_number,
+        principal_amount, interest_rate, pledge_date, pledged_item_name,
+        pledge_place, pledge_amount, pledge_interest, status, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      '2026-11-21',
+      'Lakshmi Devi',
+      '#24, Rajajinagar, Bengaluru',
+      '9900112233',
+      75000,
+      '1.8% per month',
+      '2026-11-20',
+      'Gold Chain 22K (20g)',
+      'Canara Bank',
+      60000,
+      '1.2% per month',
+      'active',
+      'Bank pledge'
+    );
+
+    // Verify distinct people count and total active pledges
+    const stats = db.prepare(`
+      SELECT 
+        COUNT(*) as totalPledges,
+        COUNT(DISTINCT customer_name) as distinctPeople,
+        SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as activePledges,
+        SUM(principal_amount) as totalPrincipal,
+        SUM(pledge_amount) as totalPledgeAmount
+      FROM pledge_records
+    `).get() as any;
+
+    expect(stats.totalPledges).toBe(3);
+    expect(stats.distinctPeople).toBe(2); // Ramesh Kumar & Lakshmi Devi
+    expect(stats.activePledges).toBe(3);
+    expect(stats.totalPrincipal).toBe(225000);
+    expect(stats.totalPledgeAmount).toBe(187000);
+
+    // Verify STRICT ISOLATION: pledge_records are NOT present in sales, purchase, or service tables
+    const salesPledges = db.prepare("SELECT COUNT(*) as count FROM sales_invoices WHERE invoice_number LIKE '%pledge%'").get() as any;
+    expect(salesPledges.count).toBe(0);
+
+    const purchasePledges = db.prepare("SELECT COUNT(*) as count FROM dealer_purchase_records WHERE record_number LIKE '%pledge%'").get() as any;
+    expect(purchasePledges.count).toBe(0);
+
+    const servicePledges = db.prepare("SELECT COUNT(*) as count FROM service_invoices WHERE invoice_number LIKE '%pledge%'").get() as any;
+    expect(servicePledges.count).toBe(0);
+  });
 });

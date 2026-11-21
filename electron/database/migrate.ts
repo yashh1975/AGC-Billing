@@ -369,6 +369,29 @@ export function runMigrations(db: Database.Database): void {
       description TEXT,
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS pledge_records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      record_date TEXT NOT NULL,
+      customer_name TEXT NOT NULL,
+      customer_address TEXT,
+      phone_number TEXT,
+      principal_amount REAL NOT NULL DEFAULT 0,
+      interest_rate TEXT,
+      pledge_date TEXT,
+      pledged_item_name TEXT,
+      pledge_place TEXT,
+      pledge_amount REAL NOT NULL DEFAULT 0,
+      pledge_interest TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      notes TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_pledge_date ON pledge_records(record_date);
+    CREATE INDEX IF NOT EXISTS idx_pledge_customer ON pledge_records(customer_name);
+    CREATE INDEX IF NOT EXISTS idx_pledge_status ON pledge_records(status);
   `);
 
   // Ensure principal_amount and service_amount columns exist in service_invoice_items

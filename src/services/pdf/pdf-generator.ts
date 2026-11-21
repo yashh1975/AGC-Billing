@@ -75,17 +75,18 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
   // ─────────────────────────────────────────────────────────────────
   // 1. TOP HEADER: LOGO & INVOICE META (LEFT) | COMPANY INFO (RIGHT)
   // ─────────────────────────────────────────────────────────────────
-  let curY = margin + 2;
+  const headerTopY = margin + 1;
+  let curY = headerTopY;
 
   // Circular Logo on Top Left
-  const logoSize = 22; // mm
+  const logoSize = 18; // mm (matches ~64px at 96dpi on A4)
   const logoX = margin;
-  const logoY = curY;
+  const logoY = headerTopY;
 
   // Draw circular crisp ring border (solid black)
   doc.setDrawColor(0, 0, 0);
-  doc.setLineWidth(0.5);
-  doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2 + 0.5, 'S');
+  doc.setLineWidth(0.4);
+  doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2 + 0.4, 'S');
 
   // Render AGC Logo (use provided logoBase64 or guaranteed embedded asset fallback)
   const logoToRender = data.logoBase64 || AGC_DEFAULT_LOGO_BASE64;
@@ -118,12 +119,12 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
   const rightX = pageWidth - margin;
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
+  doc.setFontSize(12.5);
   doc.setTextColor(0, 0, 0); // Solid black
   doc.text(
     (company.business_name || (company as any).businessName || 'ANJANEYA GOLD COMPANY').toUpperCase(),
     rightX,
-    curY + 2,
+    headerTopY + 2.5,
     { align: 'right' }
   );
 
@@ -141,7 +142,7 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
     `PH: ${company.phone || '9008477669'}`,
   ];
 
-  let addrY = curY + 6;
+  let addrY = headerTopY + 6.2;
   for (const line of addressLines) {
     if (line.startsWith('GSTIN:') || line === 'KARNATAKA') {
       doc.setFont('helvetica', 'bold');
@@ -150,15 +151,10 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
     }
     doc.setTextColor(0, 0, 0);
     doc.text(line, rightX, addrY, { align: 'right' });
-    addrY += 3.7;
+    addrY += 3.6;
   }
 
   // Title on Left under logo with generous breathing room gap
-  curY = logoY + logoSize + 9.5;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(15);
-  doc.setTextColor(0, 0, 0);
-
   const isDraftDoc = Boolean(
     data.isDraft ||
     data.documentNumber.startsWith('DRAFT') ||
@@ -179,18 +175,22 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
   } else if (data.type === 'service') {
     titleText = 'SERVICE TAX INVOICE';
   }
-  doc.text(titleText, margin, curY);
+
+  const titleY = logoY + logoSize + 4.5;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(0, 0, 0);
+  doc.text(titleText, margin, titleY);
 
   if (isDraftDoc) {
-    doc.setFontSize(7.5);
+    doc.setFontSize(7.2);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(160, 40, 40);
-    doc.text('FOR REFERENCE & ESTIMATION ONLY — NOT A TAX INVOICE', margin, curY + 4.2);
-    curY += 3.8;
+    doc.text('FOR REFERENCE & ESTIMATION ONLY — NOT A TAX INVOICE', margin, titleY + 3.8);
   }
 
   // Meta lines under title
-  curY += 4.5;
+  let metaY = isDraftDoc ? titleY + 8.2 : titleY + 5.5;
   doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
@@ -198,16 +198,19 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
   const metaLabelX = margin;
   const metaValX = margin + 34;
 
-  const docLabel = isDraftDoc ? 'ESTIMATE NO.' : 'NO.';
-  doc.text(docLabel, metaLabelX, curY);
+  const docLabel = isDraftDoc
+    ? 'ESTIMATE NO.'
+    : (data.type === 'purchase' ? 'PURCHASE NO.' : 'INVOICE NO.');
+
+  doc.text(docLabel, metaLabelX, metaY);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
-  doc.text(data.documentNumber, metaValX, curY);
+  doc.text(data.documentNumber, metaValX, metaY);
 
-  curY += 4.2;
+  metaY += 4.2;
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
-  doc.text('DATE', metaLabelX, curY);
+  doc.text('DATE', metaLabelX, metaY);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
 
@@ -222,25 +225,31 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       formattedDate = `${day} ${month} ${year}`;
     }
   } catch {}
-  doc.text(formattedDate, metaValX, curY);
+  doc.text(formattedDate, metaValX, metaY);
 
-  curY += 4.2;
+  metaY += 4.2;
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
 
   if (data.type === 'purchase' && data.originalInvoiceNumber) {
-    doc.text('DEALER BILL #', metaLabelX, curY);
+    doc.text('DEALER BILL #', metaLabelX, metaY);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
-    doc.text(`${data.originalInvoiceNumber} (${data.originalInvoiceDate || ''})`, metaValX, curY);
+    doc.text(`${data.originalInvoiceNumber} (${data.originalInvoiceDate || ''})`, metaValX, metaY);
   } else {
-    doc.text('REVERSE CHARGE', metaLabelX, curY);
+    doc.text('REVERSE CHARGE', metaLabelX, metaY);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
-    doc.text('NO', metaValX, curY);
+    doc.text('NO', metaValX, metaY);
   }
 
-  curY = Math.max(curY + 4, addrY + 2);
+  // Bottom dividing horizontal line across full page content width matching LiveInvoicePreview
+  const headerDividerY = Math.max(metaY + 4.5, addrY + 2.0);
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.35);
+  doc.line(margin, headerDividerY, pageWidth - margin, headerDividerY);
+
+  curY = headerDividerY + 3.5;
 
   // Helper for strictly 2 decimal places formatted Indian currency
   const formatMoney = (paise: number): string => {

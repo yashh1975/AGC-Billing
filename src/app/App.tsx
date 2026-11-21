@@ -17,6 +17,7 @@ import { DealerPurchasePage } from '@/pages/dealer-purchase/DealerPurchasePage';
 import { SalesBillingPage } from '@/pages/sales/SalesBillingPage';
 import { ServiceBillingPage } from '@/pages/service/ServiceBillingPage';
 import { DraftBillsPage } from '@/pages/drafts/DraftBillsPage';
+import { PledgeDetailsPage } from '@/pages/pledge-details/PledgeDetailsPage';
 import { AllBillsPage } from '@/pages/all-bills/AllBillsPage';
 import { GstReportsPage } from '@/pages/gst-reports/GstReportsPage';
 import { DocumentsPage } from '@/pages/documents/DocumentsPage';
@@ -116,6 +117,7 @@ export function App() {
                   <Route path="/sales" element={<SalesBillingPage />} />
                   <Route path="/service" element={<ServiceBillingPage />} />
                   <Route path="/draft-bills" element={<DraftBillsPage />} />
+                  <Route path="/pledge-details" element={<PledgeDetailsPage />} />
                   <Route path="/customers" element={<CustomersPage />} />
                   <Route path="/customers/:id" element={<CustomerDetailPage />} />
                   <Route path="/suppliers" element={<SuppliersPage />} />

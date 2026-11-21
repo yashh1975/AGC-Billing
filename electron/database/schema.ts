@@ -492,3 +492,24 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// ─── Pledge Records ─────────────────────────────────────────────────
+export const pledgeRecords = sqliteTable('pledge_records', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  recordDate: text('record_date').notNull(),
+  customerName: text('customer_name').notNull(),
+  customerAddress: text('customer_address'),
+  phoneNumber: text('phone_number'),
+  principalAmount: real('principal_amount').notNull().default(0),
+  interestRate: text('interest_rate'),
+  pledgeDate: text('pledge_date'),
+  pledgedItemName: text('pledged_item_name'),
+  pledgePlace: text('pledge_place'),
+  pledgeAmount: real('pledge_amount').notNull().default(0),
+  pledgeInterest: text('pledge_interest'),
+  status: text('status').notNull().default('active'),
+  notes: text('notes'),
+  createdAt: text('created_at').notNull().default('(datetime(\'now\'))'),
+  updatedAt: text('updated_at').notNull().default('(datetime(\'now\'))'),
+});
+
