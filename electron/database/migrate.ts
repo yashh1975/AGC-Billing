@@ -405,6 +405,20 @@ export function runMigrations(db: Database.Database): void {
   try {
     db.prepare('ALTER TABLE pledge_records ADD COLUMN pledged_name TEXT').run();
   } catch {}
+  try {
+    db.prepare(`
+      UPDATE pledge_records 
+      SET pledged_name = 'soma', pledged_item_name = 'Gold Chain (Takeover)'
+      WHERE (pledged_name IS NULL OR pledged_name = '') AND LOWER(pledged_item_name) = 'soma'
+    `).run();
+  } catch {}
+  try {
+    db.prepare(`
+      UPDATE pledge_records 
+      SET pledged_name = customer_name
+      WHERE pledged_name IS NULL OR pledged_name = ''
+    `).run();
+  } catch {}
 
   try {
     const profileCount = db.prepare('SELECT COUNT(*) as count FROM company_profile').get() as { count: number };

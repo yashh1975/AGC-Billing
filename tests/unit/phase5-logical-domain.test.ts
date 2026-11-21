@@ -494,4 +494,40 @@ describe('Phase 5 - Advanced Logical Domain & Invariant Tests', () => {
     expect(searchResult.length).toBeGreaterThanOrEqual(1);
     expect(searchResult[0].pledged_name).toBe('Yashwanth Gowda');
   });
+
+  it('guarantees pledge name never displays empty and backfills previous records correctly', () => {
+    // Insert an older record where pledged_name is empty string and item name is soma
+    const ins1 = db.prepare(`
+      INSERT INTO pledge_records (
+        record_date, customer_name, principal_amount, pledged_name, pledged_item_name, pledge_amount
+      ) VALUES ('2026-11-21', 'Ramesh', 150000, '', 'soma', 150000)
+    `).run();
+
+    // Insert an older record where pledged_name is NULL
+    const ins2 = db.prepare(`
+      INSERT INTO pledge_records (
+        record_date, customer_name, principal_amount, pledged_name, pledged_item_name, pledge_amount
+      ) VALUES ('2026-11-21', 'Smt. Lakshmi Devi', 100000, NULL, 'gold chain', 100000)
+    `).run();
+
+    // Run the migration backfill query
+    db.prepare(`
+      UPDATE pledge_records 
+      SET pledged_name = 'soma', pledged_item_name = 'Gold Chain (Takeover)'
+      WHERE (pledged_name IS NULL OR pledged_name = '') AND LOWER(pledged_item_name) = 'soma'
+    `).run();
+
+    db.prepare(`
+      UPDATE pledge_records 
+      SET pledged_name = customer_name
+      WHERE pledged_name IS NULL OR pledged_name = ''
+    `).run();
+
+    const r1 = db.prepare('SELECT * FROM pledge_records WHERE id = ?').get(ins1.lastInsertRowid) as any;
+    expect(r1.pledged_name).toBe('soma');
+    expect(r1.pledged_item_name).toBe('Gold Chain (Takeover)');
+
+    const r2 = db.prepare('SELECT * FROM pledge_records WHERE id = ?').get(ins2.lastInsertRowid) as any;
+    expect(r2.pledged_name).toBe('Smt. Lakshmi Devi');
+  });
 });

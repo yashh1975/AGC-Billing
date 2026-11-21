@@ -279,6 +279,7 @@ declare global {
           update: (id: number, data: Record<string, unknown>) => Promise<ApiResponse<PledgeRecord>>;
           delete: (id: number) => Promise<ApiResponse<{ id: number }>>;
           exportExcel: () => Promise<ApiResponse<{ filePath: string; fileName: string; totalRecords: number }>>;
+          openFolder: () => Promise<ApiResponse<{ folderPath: string }>>;
         };
       };
       search: {

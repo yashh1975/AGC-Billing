@@ -94,6 +94,7 @@ const api = {
       update: (id: number, data: Record<string, unknown>) => ipcRenderer.invoke('pledges:update', id, data),
       delete: (id: number) => ipcRenderer.invoke('pledges:delete', id),
       exportExcel: () => ipcRenderer.invoke('pledges:exportExcel'),
+      openFolder: () => ipcRenderer.invoke('pledges:openFolder'),
     },
   },
   search: {

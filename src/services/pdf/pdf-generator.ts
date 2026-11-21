@@ -171,7 +171,7 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
     titleText = 'SERVICE TAX INVOICE';
   }
 
-  const titleY = logoY + logoSize + 4.5;
+  const titleY = logoY + logoSize + 10.0;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
   doc.setTextColor(0, 0, 0);
@@ -181,11 +181,11 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
     doc.setFontSize(7.2);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(160, 40, 40);
-    doc.text('FOR REFERENCE & ESTIMATION ONLY — NOT A TAX INVOICE', margin, titleY + 3.8);
+    doc.text('FOR REFERENCE & ESTIMATION ONLY — NOT A TAX INVOICE', margin, titleY + 4.0);
   }
 
   // Meta lines under title (Left) and Contact/Tax lines (Right) — PERFECT HORIZONTAL SYNCHRONIZATION
-  const metaY1 = isDraftDoc ? titleY + 8.2 : titleY + 5.5;
+  const metaY1 = isDraftDoc ? titleY + 8.5 : titleY + 6.0;
   const metaY2 = metaY1 + 4.2;
   const metaY3 = metaY2 + 4.2;
 

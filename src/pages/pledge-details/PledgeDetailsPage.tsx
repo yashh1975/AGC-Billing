@@ -10,6 +10,7 @@ import {
   Plus,
   Search,
   FileSpreadsheet,
+  FolderOpen,
   Users,
   Trash2,
   Edit,
@@ -289,6 +290,22 @@ export function PledgeDetailsPage() {
     }
   };
 
+  // Open Excel Export Folder
+  const handleOpenFolder = async () => {
+    try {
+      const res = await window.api.db.pledges.openFolder();
+      if (!res.success) {
+        throw new Error(res.error || 'Failed to open folder');
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Could Not Open Folder',
+        description: err.message || 'Please check folder permissions.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const formatRupees = (amt: number) => {
     return '₹' + (amt || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
@@ -319,6 +336,17 @@ export function PledgeDetailsPage() {
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
             {isExporting ? 'Exporting...' : 'Export to Excel (.xlsx)'}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenFolder}
+            className="text-xs border-amber-600 text-amber-900 hover:bg-amber-50 flex items-center gap-1.5"
+            title="Open exported Excel folder in File Explorer"
+          >
+            <FolderOpen className="w-4 h-4 text-amber-700" />
+            View in Folder
           </Button>
 
           <Button
@@ -586,7 +614,7 @@ export function PledgeDetailsPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-gray-700">Pledged Name (Name on Pledge Slip)</Label>
+                    <Label className="text-xs font-semibold text-gray-700">Pledge Name (Name on Pledge Slip)</Label>
                     <Input
                       placeholder="e.g. Yashwanth / Ramesh Kumar"
                       value={form.pledgedName}
@@ -723,6 +751,17 @@ export function PledgeDetailsPage() {
                   <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                   Export Excel
                 </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenFolder}
+                  className="h-9 text-xs border-amber-600 text-amber-900 hover:bg-amber-50 flex items-center gap-1.5"
+                  title="Open exported Excel folder in File Explorer"
+                >
+                  <FolderOpen className="w-4 h-4 text-amber-700" />
+                  View in Folder
+                </Button>
               </div>
             </div>
           </Card>
@@ -736,7 +775,7 @@ export function PledgeDetailsPage() {
                     <th className="py-2.5 px-3 font-semibold text-center w-12">#</th>
                     <th className="py-2.5 px-3 font-semibold">Date</th>
                     <th className="py-2.5 px-3 font-semibold">Customer & Contact</th>
-                    <th className="py-2.5 px-3 font-semibold">Pledged Name</th>
+                    <th className="py-2.5 px-3 font-semibold">Pledge Name</th>
                     <th className="py-2.5 px-3 font-semibold">Address</th>
                     <th className="py-2.5 px-3 font-semibold text-right">Principal Amt</th>
                     <th className="py-2.5 px-3 font-semibold text-center">Interest (%)</th>
@@ -784,10 +823,7 @@ export function PledgeDetailsPage() {
                           )}
                         </td>
                         <td className="py-3 px-3">
-                          <span className="font-bold text-gray-900 block">{p.pledged_name || '—'}</span>
-                          {p.pledged_name && (
-                            <span className="text-[10px] text-gray-400 font-sans">Slip Name</span>
-                          )}
+                          <span className="font-bold text-gray-900 block">{p.pledged_name || p.customer_name || '—'}</span>
                         </td>
                         <td className="py-3 px-3 max-w-[180px] truncate text-gray-600" title={p.customer_address || ''}>
                           {p.customer_address || '—'}

@@ -62,6 +62,11 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
 
       const records = db.prepare(query).all(...params) as any[];
 
+      // Ensure pledge name is always populated (defaults to customer name if self-pledged)
+      records.forEach((r) => {
+        r.pledged_name = (r.pledged_name && r.pledged_name.trim()) ? r.pledged_name.trim() : r.customer_name;
+      });
+
       // Calculate aggregates
       const stats = db.prepare(`
         SELECT 
@@ -277,7 +282,7 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
         'Sl No',
         'Record Date',
         'Customer Name',
-        'Pledged Name',
+        'Pledge Name',
         'Phone Number',
         'Address',
         'Principal Amt (₹)',
@@ -316,6 +321,7 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
         const row = sheet.getRow(currentRow);
         const pAmt = Number(r.principal_amount) || 0;
         const plAmt = Number(r.pledge_amount) || 0;
+        const plName = (r.pledged_name && r.pledged_name.trim()) ? r.pledged_name.trim() : (r.customer_name || '');
         sumPrincipal += pAmt;
         sumPledgeAmt += plAmt;
 
@@ -323,7 +329,7 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
           i + 1,
           r.record_date || '',
           r.customer_name || '',
-          r.pledged_name || '',
+          plName,
           r.phone_number || '',
           r.customer_address || '',
           pAmt,
@@ -457,6 +463,22 @@ export function registerPledgesHandlers(ipcMain: IpcMain): void {
           totalRecords: records.length,
         },
       };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  // 7. Open Pledge Reports Folder in File Explorer
+  ipcMain.handle('pledges:openFolder', async () => {
+    try {
+      const fileMgr = getFileManager();
+      const rootDir = fileMgr.getDataDirectory();
+      const pledgeDir = path.join(rootDir, 'Pledge_Reports');
+      if (!fs.existsSync(pledgeDir)) {
+        fs.mkdirSync(pledgeDir, { recursive: true });
+      }
+      await shell.openPath(pledgeDir);
+      return { success: true, data: { folderPath: pledgeDir } };
     } catch (error: any) {
       return { success: false, error: error.message };
     }

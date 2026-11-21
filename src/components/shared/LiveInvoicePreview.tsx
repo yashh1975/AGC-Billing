@@ -619,7 +619,7 @@ export function LiveInvoicePreview({
                             />
                           </div>
 
-                          <div className="pt-2">
+                          <div className="pt-5">
                             <h1 className="text-2xl font-black tracking-tight text-black uppercase">
                               {documentTitle}
                             </h1>
