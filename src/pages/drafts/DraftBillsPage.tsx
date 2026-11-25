@@ -91,7 +91,8 @@ export function DraftBillsPage() {
       grossWeight: 10.0,
       netWeight: 10.0,
       rate: 7000,
-      makingCharges: 1000,
+      vaPercent: 9, // default 9% as requested
+      makingCharges: 0,
       otherCharges: 0,
       discount: 0,
       gstRate: 3,
@@ -127,7 +128,8 @@ export function DraftBillsPage() {
       grossWeight: 15.0,
       netWeight: 15.0,
       rate: 6900,
-      makingCharges: 0,
+      vaPercent: 0, // Wastage (VA)
+      makingCharges: 0, // No making charges for dealer
       otherCharges: 0,
       discount: 0,
       gstRate: 3,
@@ -398,6 +400,7 @@ export function DraftBillsPage() {
     principalAmount: it.principalAmount,
     serviceAmount: it.serviceAmount,
     makingCharges: it.makingCharges,
+    vaPercent: it.vaPercent,
     discount: it.discount,
     gstRate: it.gstRate,
   }));
@@ -854,6 +857,15 @@ export function DraftBillsPage() {
                       className="h-9 text-sm"
                     />
                   </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label className="text-xs font-semibold">Address</Label>
+                    <Input
+                      placeholder="Customer / Supplier address (optional, leave blank if none)"
+                      value={partyForm.address}
+                      onChange={(e) => setPartyForm({ ...partyForm, address: e.target.value })}
+                      className="h-9 text-sm"
+                    />
+                  </div>
                 </div>
               </Card>
 
@@ -882,18 +894,37 @@ export function DraftBillsPage() {
                             gstRate: 18,
                           },
                         ]);
-                      } else {
+                      } else if (draftType === 'sales') {
                         currentSetItems([
                           ...currentItems,
                           {
-                            description: 'Gold Article',
+                            description: 'Gold Jewellery Article',
                             category: 'Gold Ornament',
                             hsnCode: '7113',
                             quantity: 1,
                             grossWeight: 5.0,
                             netWeight: 5.0,
                             rate: 7000,
-                            makingCharges: 500,
+                            vaPercent: 9,
+                            makingCharges: 0,
+                            discount: 0,
+                            gstRate: 3,
+                          },
+                        ]);
+                      } else {
+                        // purchase (dealer inward)
+                        currentSetItems([
+                          ...currentItems,
+                          {
+                            description: 'Gold Jewellery Inward Estimate',
+                            category: 'Gold Bullion',
+                            hsnCode: '7113',
+                            quantity: 1,
+                            grossWeight: 5.0,
+                            netWeight: 5.0,
+                            rate: 6900,
+                            vaPercent: 0,
+                            makingCharges: 0,
                             discount: 0,
                             gstRate: 3,
                           },
@@ -919,12 +950,26 @@ export function DraftBillsPage() {
                           <th className="p-2 w-24 text-right font-bold">Taxable</th>
                           <th className="p-2 w-10 text-center"></th>
                         </tr>
+                      ) : draftType === 'sales' ? (
+                        <tr>
+                          <th className="p-2 w-40 font-bold">Description</th>
+                          <th className="p-2 w-20 text-center font-bold">Gross Wt (g)</th>
+                          <th className="p-2 w-20 text-center font-bold">Net Wt (g)</th>
+                          <th className="p-2 w-20 text-right font-bold">Rate/g (₹)</th>
+                          <th className="p-2 w-16 text-center font-bold">VA %</th>
+                          <th className="p-2 w-20 text-right font-bold">Making (₹)</th>
+                          <th className="p-2 w-16 text-center font-bold">GST %</th>
+                          <th className="p-2 w-24 text-right font-bold">Taxable</th>
+                          <th className="p-2 w-10 text-center"></th>
+                        </tr>
                       ) : (
+                        /* Dealer Inward Estimation: Gross Wt, Net Wt, Rate, Wastage (VA) - NO Making! */
                         <tr>
                           <th className="p-2 w-44 font-bold">Description</th>
+                          <th className="p-2 w-20 text-center font-bold">Gross Wt (g)</th>
                           <th className="p-2 w-20 text-center font-bold">Net Wt (g)</th>
                           <th className="p-2 w-24 text-right font-bold">Rate/g (₹)</th>
-                          <th className="p-2 w-20 text-right font-bold">Making (₹)</th>
+                          <th className="p-2 w-20 text-center font-bold">Wastage (VA %)</th>
                           <th className="p-2 w-16 text-center font-bold">GST %</th>
                           <th className="p-2 w-24 text-right font-bold">Taxable</th>
                           <th className="p-2 w-10 text-center"></th>
@@ -978,8 +1023,24 @@ export function DraftBillsPage() {
                                   />
                                 </td>
                               </>
-                            ) : (
+                            ) : draftType === 'sales' ? (
                               <>
+                                <td className="p-1.5">
+                                  <Input
+                                    type="number"
+                                    step="0.001"
+                                    value={item.grossWeight || ''}
+                                    placeholder="10.000"
+                                    onChange={(e) => {
+                                      const upd = [...currentItems];
+                                      const val = parseFloat(e.target.value) || 0;
+                                      upd[idx].grossWeight = val;
+                                      if (!upd[idx].netWeight) upd[idx].netWeight = val;
+                                      currentSetItems(upd);
+                                    }}
+                                    className="h-8 text-xs text-center"
+                                  />
+                                </td>
                                 <td className="p-1.5">
                                   <Input
                                     type="number"
@@ -990,10 +1051,10 @@ export function DraftBillsPage() {
                                       const upd = [...currentItems];
                                       const val = parseFloat(e.target.value) || 0;
                                       upd[idx].netWeight = val;
-                                      upd[idx].grossWeight = val;
+                                      if (!upd[idx].grossWeight) upd[idx].grossWeight = val;
                                       currentSetItems(upd);
                                     }}
-                                    className="h-8 text-xs text-center"
+                                    className="h-8 text-xs text-center font-semibold"
                                   />
                                 </td>
                                 <td className="p-1.5">
@@ -1012,6 +1073,21 @@ export function DraftBillsPage() {
                                 <td className="p-1.5">
                                   <Input
                                     type="number"
+                                    step="0.1"
+                                    value={item.vaPercent !== undefined ? item.vaPercent : 9}
+                                    placeholder="9"
+                                    onChange={(e) => {
+                                      const upd = [...currentItems];
+                                      upd[idx].vaPercent = parseFloat(e.target.value) || 0;
+                                      currentSetItems(upd);
+                                    }}
+                                    className="h-8 text-xs text-center font-bold text-amber-800"
+                                    title="Value Addition / Wastage % (Default 9%)"
+                                  />
+                                </td>
+                                <td className="p-1.5">
+                                  <Input
+                                    type="number"
                                     value={item.makingCharges || ''}
                                     placeholder="0"
                                     onChange={(e) => {
@@ -1020,6 +1096,71 @@ export function DraftBillsPage() {
                                       currentSetItems(upd);
                                     }}
                                     className="h-8 text-xs text-right"
+                                  />
+                                </td>
+                              </>
+                            ) : (
+                              /* Dealer Inward Estimation */
+                              <>
+                                <td className="p-1.5">
+                                  <Input
+                                    type="number"
+                                    step="0.001"
+                                    value={item.grossWeight || ''}
+                                    placeholder="15.000"
+                                    onChange={(e) => {
+                                      const upd = [...currentItems];
+                                      const val = parseFloat(e.target.value) || 0;
+                                      upd[idx].grossWeight = val;
+                                      if (!upd[idx].netWeight) upd[idx].netWeight = val;
+                                      currentSetItems(upd);
+                                    }}
+                                    className="h-8 text-xs text-center"
+                                  />
+                                </td>
+                                <td className="p-1.5">
+                                  <Input
+                                    type="number"
+                                    step="0.001"
+                                    value={item.netWeight || ''}
+                                    placeholder="15.000"
+                                    onChange={(e) => {
+                                      const upd = [...currentItems];
+                                      const val = parseFloat(e.target.value) || 0;
+                                      upd[idx].netWeight = val;
+                                      if (!upd[idx].grossWeight) upd[idx].grossWeight = val;
+                                      currentSetItems(upd);
+                                    }}
+                                    className="h-8 text-xs text-center font-semibold"
+                                  />
+                                </td>
+                                <td className="p-1.5">
+                                  <Input
+                                    type="number"
+                                    value={item.rate || ''}
+                                    placeholder="6900"
+                                    onChange={(e) => {
+                                      const upd = [...currentItems];
+                                      upd[idx].rate = parseFloat(e.target.value) || 0;
+                                      currentSetItems(upd);
+                                    }}
+                                    className="h-8 text-xs text-right font-medium"
+                                  />
+                                </td>
+                                <td className="p-1.5">
+                                  <Input
+                                    type="number"
+                                    step="0.1"
+                                    value={item.vaPercent !== undefined ? item.vaPercent : ''}
+                                    placeholder="0"
+                                    onChange={(e) => {
+                                      const upd = [...currentItems];
+                                      upd[idx].vaPercent = parseFloat(e.target.value) || 0;
+                                      upd[idx].makingCharges = 0; // Strictly ensure no making
+                                      currentSetItems(upd);
+                                    }}
+                                    className="h-8 text-xs text-center font-bold text-amber-800"
+                                    title="Wastage (VA %)"
                                   />
                                 </td>
                               </>

@@ -76,6 +76,7 @@ export function SalesBillingPage() {
       grossWeight: 0,
       netWeight: 0,
       rate: 0,
+      vaPercent: 9,
       makingCharges: 0,
       otherCharges: 0,
       discount: 0,
@@ -165,6 +166,7 @@ export function SalesBillingPage() {
         grossWeight: 0,
         netWeight: 0,
         rate: 0,
+        vaPercent: 9,
         makingCharges: 0,
         otherCharges: 0,
         discount: 0,
@@ -529,6 +531,7 @@ export function SalesBillingPage() {
                     <th className="p-2.5 w-24 min-w-[85px] text-right font-bold">G. Wt(g)</th>
                     <th className="p-2.5 w-24 min-w-[85px] text-right font-bold">N. Wt(g)</th>
                     <th className="p-2.5 w-28 min-w-[105px] text-right font-bold">Rate (₹)</th>
+                    <th className="p-2.5 w-20 min-w-[70px] text-center font-bold">VA %</th>
                     <th className="p-2.5 w-24 min-w-[85px] text-right font-bold">Making (₹)</th>
                     <th className="p-2.5 w-24 min-w-[85px] text-right font-bold">Disc (₹)</th>
                     <th className="p-2.5 w-20 min-w-[70px] text-center font-bold">GST %</th>
@@ -601,6 +604,19 @@ export function SalesBillingPage() {
                               handleItemChange(idx, 'rate', parseFloat(e.target.value) || 0)
                             }
                             className="h-9 text-sm text-right font-medium"
+                          />
+                        </td>
+                        <td className="p-2">
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="9"
+                            value={item.vaPercent !== undefined ? item.vaPercent : 9}
+                            onChange={(e) =>
+                              handleItemChange(idx, 'vaPercent', parseFloat(e.target.value) || 0)
+                            }
+                            className="h-9 text-sm text-center font-bold text-amber-800"
+                            title="Value Addition / Wastage % (Default 9%)"
                           />
                         </td>
                         <td className="p-2">

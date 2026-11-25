@@ -23,6 +23,8 @@ export interface LineItemInput {
   principalAmount?: number; // in Rupees (Financial Services loan takeover principal amount)
   serviceAmount?: number; // in Rupees (Financial Services facilitation fee)
   makingCharges?: number; // in Rupees
+  vaPercent?: number; // Wastage / Value Addition % (e.g. 9)
+  vaAmount?: number; // in Rupees
   otherCharges?: number; // in Rupees
   discount?: number; // in Rupees
   gstRate: number; // percentage, e.g. 3 for 3%, 18 for 18%
@@ -41,6 +43,8 @@ export interface LineItemCalculation {
   principalAmountPaise?: number;
   serviceAmountPaise?: number;
   makingChargesPaise: number;
+  vaPercent?: number;
+  vaAmountPaise?: number;
   otherChargesPaise: number;
   discountPaise: number;
   taxableValuePaise: number;
@@ -56,6 +60,7 @@ export interface InvoiceCalculationSummary {
   subtotalPaise: number;
   totalDiscountPaise: number;
   totalMakingChargesPaise: number;
+  totalVaAmountPaise: number;
   totalOtherChargesPaise: number;
   taxableAmountPaise: number;
   cgstAmountPaise: number;
@@ -127,6 +132,7 @@ export function calculateLineItem(
   const serviceAmountPaise = item.serviceAmount !== undefined && item.serviceAmount !== null
     ? toPaise(item.serviceAmount)
     : (item.sacCode === '9971' || item.category === 'Financial Service' ? ratePaise : 0);
+  const vaPercent = item.vaPercent !== undefined && item.vaPercent !== null ? Number(item.vaPercent) : 0;
   const makingChargesPaise = toPaise(item.makingCharges);
   const otherChargesPaise = toPaise(item.otherCharges);
   const discountPaise = toPaise(item.discount);
@@ -151,6 +157,12 @@ export function calculateLineItem(
     baseAmountPaise = ratePaise * quantity;
   }
 
+  // Calculate VA (Wastage) amount in paise if applicable (percentage of gold bullion/jewellery base value)
+  let vaAmountPaise = 0;
+  if (!isFinancialService && weight > 0 && vaPercent > 0) {
+    vaAmountPaise = Math.round((baseAmountPaise * vaPercent) / 100);
+  }
+
   let taxableValuePaise = 0;
   let totalValuePaise = 0;
   let cgstAmountPaise = 0;
@@ -160,7 +172,7 @@ export function calculateLineItem(
   if (item.isTaxInclusive) {
     // Gross includes taxes: Gross = Taxable * (1 + GST)
     const grossAmountPaise =
-      baseAmountPaise + makingChargesPaise + otherChargesPaise - discountPaise;
+      baseAmountPaise + vaAmountPaise + makingChargesPaise + otherChargesPaise - discountPaise;
     taxableValuePaise = Math.round((grossAmountPaise * 100) / (100 + gstRate));
     const totalTaxPaise = grossAmountPaise - taxableValuePaise;
 
@@ -175,10 +187,10 @@ export function calculateLineItem(
     }
     totalValuePaise = grossAmountPaise;
   } else {
-    // Tax exclusive: Taxable = Base + Making + Other - Discount
+    // Tax exclusive: Taxable = Base + VA + Making + Other - Discount
     taxableValuePaise = Math.max(
       0,
-      baseAmountPaise + makingChargesPaise + otherChargesPaise - discountPaise
+      baseAmountPaise + vaAmountPaise + makingChargesPaise + otherChargesPaise - discountPaise
     );
 
     if (supplyType === 'intra') {
@@ -209,6 +221,8 @@ export function calculateLineItem(
     principalAmountPaise,
     serviceAmountPaise,
     makingChargesPaise,
+    vaPercent,
+    vaAmountPaise,
     otherChargesPaise,
     discountPaise,
     taxableValuePaise,
@@ -235,6 +249,7 @@ export function calculateInvoice(
   let subtotalPaise = 0;
   let totalDiscountPaise = 0;
   let totalMakingChargesPaise = 0;
+  let totalVaAmountPaise = 0;
   let totalOtherChargesPaise = 0;
   let taxableAmountPaise = 0;
   let cgstAmountPaise = 0;
@@ -247,6 +262,7 @@ export function calculateInvoice(
     subtotalPaise += calc.ratePaise * calc.quantity;
     totalDiscountPaise += calc.discountPaise;
     totalMakingChargesPaise += calc.makingChargesPaise;
+    totalVaAmountPaise += calc.vaAmountPaise || 0;
     totalOtherChargesPaise += calc.otherChargesPaise;
     taxableAmountPaise += calc.taxableValuePaise;
     cgstAmountPaise += calc.cgstAmountPaise;
@@ -271,6 +287,7 @@ export function calculateInvoice(
     subtotalPaise,
     totalDiscountPaise,
     totalMakingChargesPaise,
+    totalVaAmountPaise,
     totalOtherChargesPaise,
     taxableAmountPaise,
     cgstAmountPaise,

@@ -122,6 +122,57 @@ describe('Phase 2 - GST Engine & Core Billing Calculations', () => {
       expect(summary.grandTotalPaise).toBe(7725000); // ₹77,250.00
     });
 
+    it('calculates 9% VA (wastage) on gold jewellery base amount and adds to taxable value', () => {
+      // 10 grams gold @ ₹7,000/g = ₹70,000 base
+      // 9% VA = 9% of ₹70,000 = ₹6,300
+      // Taxable = ₹70,000 + ₹6,300 = ₹76,300
+      // 3% GST intra = 1.5% CGST (₹1,144.50 -> ₹1,145), 1.5% SGST (₹1,144.50 -> ₹1,145) -> Total = ₹78,590
+      const items = [
+        {
+          description: 'Gold Necklace Article',
+          hsnCode: '7113',
+          quantity: 1,
+          grossWeight: 10.0,
+          netWeight: 10.0,
+          rate: 7000,
+          vaPercent: 9,
+          makingCharges: 0,
+          discount: 0,
+          gstRate: 3,
+        },
+      ];
+
+      const summary = calculateInvoice(items, 'Karnataka', 'Karnataka');
+      expect(summary.totalVaAmountPaise).toBe(630000); // ₹6,300.00
+      expect(summary.taxableAmountPaise).toBe(7630000); // ₹76,300.00
+      expect(summary.grandTotalPaise).toBe(7858900); // ₹78,589.00
+    });
+
+    it('calculates dealer purchase estimation with gross weight and wastage (VA) without making charges', () => {
+      // 15.000g gross & net weight @ ₹6,900/g = ₹1,03,500 base
+      // 2% VA wastage = ₹2,070
+      // Taxable = ₹1,03,500 + ₹2,070 = ₹1,05,570
+      const items = [
+        {
+          description: 'Gold Jewellery Inward Estimate',
+          hsnCode: '7108',
+          quantity: 1,
+          grossWeight: 15.0,
+          netWeight: 15.0,
+          rate: 6900,
+          vaPercent: 2,
+          makingCharges: 0,
+          discount: 0,
+          gstRate: 3,
+        },
+      ];
+
+      const summary = calculateInvoice(items, 'Karnataka', 'Karnataka');
+      expect(summary.totalVaAmountPaise).toBe(207000); // ₹2,070.00
+      expect(summary.taxableAmountPaise).toBe(10557000); // ₹1,05,570.00
+      expect(summary.grandTotalPaise).toBe(10873700); // ₹1,08,737.00 (rounded off to nearest rupee)
+    });
+
     it('financial service bill applies 18% GST strictly to service fee and ignores loan principal', () => {
       // ₹1,00,000 Loan Takeover principal, ₹500 Service Fee -> 18% GST on ₹500 = ₹90 tax -> Total ₹590
       const items = [

@@ -18,6 +18,7 @@ export interface LiveInvoiceItem {
   principalAmount?: number; // in Rupees (Loan Principal for Financial Services)
   serviceAmount?: number; // in Rupees (Facilitation Fee)
   makingCharges?: number;
+  vaPercent?: number; // Wastage / Value Addition % (e.g. 9)
   discount?: number; // in Rupees
   gstRate: number; // percentage, e.g. 3 or 18
 }
@@ -129,16 +130,19 @@ export function LiveInvoicePreview({
       totalPrincipal += principal;
       totalServiceFee += sFee;
 
+      const vaPercent = item.vaPercent || 0;
+      const w = nw > 0 ? nw : gw;
+      const vaAmount = (type !== 'service' && w > 0 && vaPercent > 0) ? (w * rate * vaPercent) / 100 : 0;
+
       let baseAmount = 0;
       if (type === 'service') {
         baseAmount = sFee > 0 ? sFee : rate;
       } else if (type === 'purchase') {
-        // Dealer purchase: taxable value = rate * (net weight || gross weight), or rate * qty if weight not specified
-        const w = nw > 0 ? nw : gw;
-        baseAmount = w > 0 ? w * rate + making : qty * rate + making;
+        // Dealer purchase: taxable value = rate * (net weight || gross weight) + vaAmount + making
+        baseAmount = w > 0 ? w * rate + vaAmount + making : qty * rate + making;
       } else if (nw > 0 || gw > 0) {
-        // Gold sales jewellery: weight in grams * rate per gram
-        baseAmount = (nw > 0 ? nw : gw) * rate + making;
+        // Gold sales jewellery: weight in grams * rate per gram + vaAmount + making
+        baseAmount = (nw > 0 ? nw : gw) * rate + vaAmount + making;
       } else {
         baseAmount = qty * rate + making;
       }
@@ -690,22 +694,28 @@ export function LiveInvoicePreview({
                           {type === 'purchase' ? 'RECEIVED FROM' : 'BILL TO'}
                         </span>
                         <h3 className="text-sm font-black text-black uppercase">
-                          {partyName || 'CASH / RETAIL CUSTOMER'}
+                          {partyName || (type === 'purchase' ? 'DEALER / SUPPLIER' : 'CASH / RETAIL CUSTOMER')}
                         </h3>
-                        <p className="text-xs text-black leading-snug">
-                          {partyAddress || '#9, 1ST MAIN, NANDINI LAYOUT'}
-                        </p>
-                        <p className="text-xs text-black leading-snug">
-                          {partyCity ? `${partyCity} - 560096` : 'BENGALURU - 560096'}
-                        </p>
-                        <p className="text-xs font-semibold text-black uppercase">
-                          {partyState || 'KARNATAKA'}
-                        </p>
+                        {partyAddress ? (
+                          <p className="text-xs text-black leading-snug">
+                            {partyAddress}
+                          </p>
+                        ) : null}
+                        {partyCity ? (
+                          <p className="text-xs text-black leading-snug">
+                            {partyCity}
+                          </p>
+                        ) : null}
+                        {(partyState || (!partyAddress && placeOfSupply)) && (
+                          <p className="text-xs font-semibold text-black uppercase">
+                            {partyState || placeOfSupply || 'KARNATAKA'}
+                          </p>
+                        )}
                         {(partyMobile || partyGstin) && (
-                          <p className="text-xs text-black pt-0.5">
-                            {partyMobile && <span>Mob: {partyMobile}</span>}
-                            {partyMobile && partyGstin && <span> | </span>}
-                            {partyGstin && <span className="font-semibold">GSTIN: {partyGstin}</span>}
+                          <p className="text-xs text-black pt-0.5 font-bold">
+                            {partyMobile && <span>PH: {partyMobile}</span>}
+                            {partyMobile && partyGstin && <span>  |  </span>}
+                            {partyGstin && <span>GSTIN: {partyGstin}</span>}
                           </p>
                         )}
                       </div>

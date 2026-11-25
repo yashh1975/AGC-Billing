@@ -28,6 +28,8 @@ export interface InvoicePdfData {
     principalAmountPaise?: number;
     serviceAmountPaise?: number;
     makingChargesPaise?: number;
+    vaPercent?: number;
+    vaAmountPaise?: number;
     discountPaise?: number;
     gstRate: number;
     cgstAmountPaise: number;
@@ -672,7 +674,7 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       // 2. BILL TO & PLACE OF SUPPLY CARD (PAGE 1 ONLY)
       // ─────────────────────────────────────────────────────────────
       const billBoxY = curY;
-      const billBoxHeight = 23;
+      const billBoxHeight = 24.5;
 
       // Background rounded box with solid black border
       doc.setDrawColor(0, 0, 0);
@@ -695,15 +697,38 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(0, 0, 0);
 
-      let pY = billBoxY + 13;
-      const partyLines = [
-        data.partyAddress || '#9, 1ST MAIN, NANJUNDESHWARA NAGAR, NANDINI LAYOUT',
-        'BENGALURU - 560096',
-        'KARNATAKA',
-      ];
-      for (const pl of partyLines) {
-        doc.text(pl, margin + 4, pY);
-        pY += 3.2;
+      let pY = billBoxY + 12.2;
+      doc.setFontSize(7.8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
+
+      if (data.partyAddress && data.partyAddress.trim()) {
+        const addrLines: string[] = doc.splitTextToSize(data.partyAddress.trim(), 90);
+        for (const al of addrLines.slice(0, 2)) {
+          doc.text(al, margin + 4, pY);
+          pY += 3.1;
+        }
+      }
+
+      if (data.placeOfSupply && data.placeOfSupply.trim() && !data.partyAddress) {
+        doc.text(data.placeOfSupply.trim().toUpperCase(), margin + 4, pY);
+        pY += 3.1;
+      }
+
+      // Customer / Party Mobile & GSTIN
+      const contactBits: string[] = [];
+      const partyMobileStr = data.partyMobile ? String(data.partyMobile).trim() : '';
+      const partyGstinStr = data.partyGstin ? String(data.partyGstin).trim() : '';
+      if (partyMobileStr) {
+        contactBits.push(`PH: ${partyMobileStr}`);
+      }
+      if (partyGstinStr) {
+        contactBits.push(`GSTIN: ${partyGstinStr}`);
+      }
+      if (contactBits.length > 0) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text(contactBits.join('   |   '), margin + 4, pY);
       }
 
       // Right: Place of Supply & Badge
@@ -1070,10 +1095,10 @@ export function formatRecordToPdfData(
 
   const docNumber = doc.invoice_number || doc.record_number || '';
   const docDate = doc.invoice_date || doc.record_date || new Date().toISOString().slice(0, 10);
-  const partyName = doc.customer_name || doc.supplier_name || 'Retail Customer';
-  const partyMobile = doc.customer_mobile || doc.supplier_mobile || '';
-  const partyGstin = doc.customer_gstin || doc.supplier_gstin || '';
-  const partyAddress = doc.customer_address || doc.supplier_address || '';
+  const partyName = doc.customer_name || doc.supplier_name || doc.party_name || (isPurchase ? 'DEALER / SUPPLIER' : 'CASH / RETAIL CUSTOMER');
+  const partyMobile = doc.customer_mobile || doc.supplier_mobile || doc.party_mobile || '';
+  const partyGstin = doc.customer_gstin || doc.supplier_gstin || doc.party_gstin || '';
+  const partyAddress = doc.customer_address || doc.supplier_address || doc.party_address || '';
   const placeOfSupply = doc.place_of_supply || doc.customer_state || doc.supplier_state || 'Karnataka';
   const supplyType = (doc.supply_type || (doc.igst_amount && Number(doc.igst_amount) > 0 ? 'inter' : 'intra')) as 'intra' | 'inter';
 
@@ -1093,14 +1118,19 @@ export function formatRecordToPdfData(
       item.serviceAmountPaise ?? item.service_amount_paise ?? item.service_amount ?? (item.serviceAmount !== undefined ? Math.round(item.serviceAmount * 100) : undefined)
     );
     const makingChargesPaise = parsePaise(item.makingChargesPaise ?? item.making_charges);
+    const vaPercent = Number(item.vaPercent ?? item.va_percent ?? 0);
     const discountPaise = parsePaise(item.discountPaise ?? item.discount_amount ?? item.discount);
 
     const nw = Number(item.net_weight ?? item.netWeight ?? 0);
     const gw = Number(item.gross_weight ?? item.grossWeight ?? 0);
     const w = nw > 0 ? nw : gw;
+    const vaAmountPaise = (!isService && w > 0 && vaPercent > 0)
+      ? Math.round((Math.round(w * ratePaise) * vaPercent) / 100)
+      : parsePaise(item.vaAmountPaise ?? item.va_amount);
+
     const baseFallback = isService
       ? (serviceAmountPaise > 0 ? serviceAmountPaise : ratePaise)
-      : (w > 0 ? Math.round(w * ratePaise) : ratePaise * qty);
+      : (w > 0 ? Math.round(w * ratePaise) + vaAmountPaise : ratePaise * qty);
 
     const taxableValuePaise = parsePaise(
       item.taxableValuePaise ?? item.taxable_value ?? item.taxable_amount,
@@ -1129,6 +1159,8 @@ export function formatRecordToPdfData(
       principalAmountPaise,
       serviceAmountPaise,
       makingChargesPaise,
+      vaPercent,
+      vaAmountPaise,
       discountPaise,
       gstRate,
       cgstAmountPaise,

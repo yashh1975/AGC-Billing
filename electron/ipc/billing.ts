@@ -114,6 +114,26 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
 
           if (existingCustomer) {
             customerId = existingCustomer.id;
+            if (data.customer.address || data.customer.name || data.customer.gstin) {
+              db.prepare(`
+                UPDATE customers SET
+                  name = COALESCE(?, name),
+                  address = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE address END,
+                  city = COALESCE(?, city),
+                  gstin = COALESCE(?, gstin),
+                  last_transaction_date = ?
+                WHERE id = ?
+              `).run(
+                data.customer.name || null,
+                data.customer.address || null,
+                data.customer.address || null,
+                data.customer.address || null,
+                data.customer.city || null,
+                data.customer.gstin || null,
+                data.invoiceDate,
+                customerId
+              );
+            }
           } else {
             // Generate customer reference AGC-CUS-XXXX
             const lastCus = db.prepare(
@@ -223,9 +243,9 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
           const insertItem = db.prepare(`
             INSERT INTO sales_invoice_items (
               invoice_id, description, category, hsn_code, quantity, gross_weight, net_weight,
-              rate, making_charges, other_charges, discount, taxable_value, gst_rate,
+              rate, va_percent, va_amount, making_charges, other_charges, discount, taxable_value, gst_rate,
               cgst_amount, sgst_amount, igst_amount, total_value, sort_order
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `);
 
           data.items.forEach((item: any, idx: number) => {
@@ -238,6 +258,8 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
               item.grossWeight || null,
               item.netWeight || null,
               item.ratePaise || 0,
+              item.vaPercent || 0,
+              item.vaAmountPaise || 0,
               item.makingChargesPaise || 0,
               item.otherChargesPaise || 0,
               item.discountPaise || 0,
@@ -490,6 +512,26 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
 
           if (existingSupplier) {
             supplierId = existingSupplier.id;
+            if (data.supplier.address || data.supplier.name || data.supplier.gstin) {
+              db.prepare(`
+                UPDATE suppliers SET
+                  name = COALESCE(?, name),
+                  address = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE address END,
+                  city = COALESCE(?, city),
+                  gstin = COALESCE(?, gstin),
+                  last_transaction_date = ?
+                WHERE id = ?
+              `).run(
+                data.supplier.name || null,
+                data.supplier.address || null,
+                data.supplier.address || null,
+                data.supplier.address || null,
+                data.supplier.city || null,
+                data.supplier.gstin || null,
+                data.recordDate,
+                supplierId
+              );
+            }
           } else {
             const lastSup = db.prepare(
               "SELECT reference_number FROM suppliers WHERE reference_number LIKE 'AGC-SUP-%' ORDER BY id DESC LIMIT 1"
@@ -591,8 +633,8 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
           const insertItem = db.prepare(`
             INSERT INTO dealer_purchase_items (
               purchase_id, description, category, hsn_code, quantity, gross_weight, net_weight,
-              rate, taxable_value, gst_rate, cgst_amount, sgst_amount, igst_amount, total_value, sort_order
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              rate, va_percent, va_amount, taxable_value, gst_rate, cgst_amount, sgst_amount, igst_amount, total_value, sort_order
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `);
 
           data.items.forEach((item: any, idx: number) => {
@@ -605,6 +647,8 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
               item.grossWeight || null,
               item.netWeight || null,
               item.ratePaise || 0,
+              item.vaPercent || 0,
+              item.vaAmountPaise || 0,
               item.taxableValuePaise || 0,
               item.gstRate || 3,
               item.cgstAmountPaise || 0,
@@ -796,6 +840,26 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
 
           if (existingCustomer) {
             customerId = existingCustomer.id;
+            if (data.customer.address || data.customer.name || data.customer.gstin) {
+              db.prepare(`
+                UPDATE customers SET
+                  name = COALESCE(?, name),
+                  address = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE address END,
+                  city = COALESCE(?, city),
+                  gstin = COALESCE(?, gstin),
+                  last_transaction_date = ?
+                WHERE id = ?
+              `).run(
+                data.customer.name || null,
+                data.customer.address || null,
+                data.customer.address || null,
+                data.customer.address || null,
+                data.customer.city || null,
+                data.customer.gstin || null,
+                data.invoiceDate,
+                customerId
+              );
+            }
           } else {
             const lastCus = db.prepare(
               "SELECT reference_number FROM customers WHERE reference_number LIKE 'AGC-CUS-%' ORDER BY id DESC LIMIT 1"
@@ -1196,6 +1260,7 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
                  (s.amount_received / 100.0) as amount_paid,
                  (s.balance_due / 100.0) as balance_due,
                  s.customer_id as party_id, c.name as party_name, c.mobile as party_mobile,
+                 c.address as party_address, c.city as party_city, c.state as party_state,
                  c.gstin as party_gstin
           FROM sales_invoices s
           LEFT JOIN customers c ON s.customer_id = c.id
@@ -1219,6 +1284,7 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
                  (p.amount_paid / 100.0) as amount_paid,
                  (p.balance_due / 100.0) as balance_due,
                  p.supplier_id as party_id, s.name as party_name, s.mobile as party_mobile,
+                 s.address as party_address, s.city as party_city, s.state as party_state,
                  s.gstin as party_gstin
           FROM dealer_purchase_records p
           LEFT JOIN suppliers s ON p.supplier_id = s.id
@@ -1242,6 +1308,7 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
                  (sv.amount_received / 100.0) as amount_paid,
                  (sv.balance_due / 100.0) as balance_due,
                  sv.customer_id as party_id, c.name as party_name, c.mobile as party_mobile,
+                 c.address as party_address, c.city as party_city, c.state as party_state,
                  c.gstin as party_gstin
           FROM service_invoices sv
           LEFT JOIN customers c ON sv.customer_id = c.id

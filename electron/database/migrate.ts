@@ -191,6 +191,8 @@ export function runMigrations(db: Database.Database): void {
       gross_weight REAL,
       net_weight REAL,
       rate INTEGER NOT NULL DEFAULT 0,
+      va_percent REAL DEFAULT 0,
+      va_amount INTEGER NOT NULL DEFAULT 0,
       taxable_value INTEGER NOT NULL DEFAULT 0,
       gst_rate REAL NOT NULL DEFAULT 0,
       cgst_amount INTEGER NOT NULL DEFAULT 0,
@@ -248,6 +250,8 @@ export function runMigrations(db: Database.Database): void {
       gross_weight REAL,
       net_weight REAL,
       rate INTEGER NOT NULL DEFAULT 0,
+      va_percent REAL DEFAULT 0,
+      va_amount INTEGER NOT NULL DEFAULT 0,
       making_charges INTEGER NOT NULL DEFAULT 0,
       other_charges INTEGER NOT NULL DEFAULT 0,
       discount INTEGER NOT NULL DEFAULT 0,
@@ -401,6 +405,18 @@ export function runMigrations(db: Database.Database): void {
   } catch {}
   try {
     db.prepare('ALTER TABLE service_invoice_items ADD COLUMN service_amount INTEGER NOT NULL DEFAULT 0').run();
+  } catch {}
+  try {
+    db.prepare('ALTER TABLE sales_invoice_items ADD COLUMN va_percent REAL DEFAULT 0').run();
+  } catch {}
+  try {
+    db.prepare('ALTER TABLE sales_invoice_items ADD COLUMN va_amount INTEGER NOT NULL DEFAULT 0').run();
+  } catch {}
+  try {
+    db.prepare('ALTER TABLE dealer_purchase_items ADD COLUMN va_percent REAL DEFAULT 0').run();
+  } catch {}
+  try {
+    db.prepare('ALTER TABLE dealer_purchase_items ADD COLUMN va_amount INTEGER NOT NULL DEFAULT 0').run();
   } catch {}
   try {
     db.prepare('ALTER TABLE pledge_records ADD COLUMN pledged_name TEXT').run();
