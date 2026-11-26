@@ -3,12 +3,12 @@
 ### The complete, offline-first desktop GST billing, loan takeover & dealer purchase software for Anjaneya Gold Company.
 
 <p align="center">
-  <a href="https://github.com/yashh1975/AGC-Billing/releases"><img src="https://img.shields.io/badge/Release-v1.0.0-gold.svg?style=for-the-badge&logo=windows" alt="Latest Release" /></a>
+  <a href="https://github.com/yashh1975/AGC-Billing/releases/tag/v2.0.0"><img src="https://img.shields.io/badge/Release-v2.0.0-gold.svg?style=for-the-badge&logo=windows" alt="Latest Release v2.0.0" /></a>
   <a href="https://github.com/yashh1975/AGC-Billing/releases"><img src="https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg?style=for-the-badge&logo=windows11" alt="Platform" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Proprietary%20%2F%20AGC-red.svg?style=for-the-badge" alt="License" /></a>
   <img src="https://img.shields.io/badge/Database-SQLite%203%20(Local%20%26%20WAL)-003B57.svg?style=for-the-badge&logo=sqlite" alt="SQLite" />
   <img src="https://img.shields.io/badge/GST-HSN%207113%20%7C%20SAC%209971-success.svg?style=for-the-badge" alt="GST Compliance" />
-  <img src="https://img.shields.io/badge/Tests-52%2F52%20Passed-brightgreen.svg?style=for-the-badge" alt="Tests" />
+  <img src="https://img.shields.io/badge/Tests-60%2F60%20Passed-brightgreen.svg?style=for-the-badge" alt="Tests" />
 </p>
 
 ---
@@ -20,8 +20,8 @@
 A specialized desktop billing software tailored for gold jewellery and financial services: generate statutory sales tax invoices, record dealer purchase bills with attachment scans, issue takeover/re-pledging service receipts, and export complete audit-ready 5-tab Excel workbooks for your Chartered Accountant in seconds.
 
 <p align="center">
-  <a href="https://github.com/yashh1975/AGC-Billing/releases/download/v1.0.0/AGC-Billing-Setup-1.0.0.exe">
-    <img src="https://img.shields.io/badge/%E2%AC%87%20WINDOWS%20SETUP%20(.EXE)-103%20MB-blue?style=for-the-badge&logo=windows" alt="Download for Windows" />
+  <a href="https://github.com/yashh1975/AGC-Billing/releases/download/v2.0.0/AGC-Billing-Setup-1.0.0.exe">
+    <img src="https://img.shields.io/badge/%E2%AC%87%20WINDOWS%20SETUP%20(.EXE)-97.3%20MB-blue?style=for-the-badge&logo=windows" alt="Download for Windows" />
   </a>
   &nbsp;&nbsp;
   <a href="#what-it-does">
@@ -33,7 +33,7 @@ A specialized desktop billing software tailored for gold jewellery and financial
   </a>
 </p>
 
-> **Quick Download**: [AGC-Billing-Setup-1.0.0.exe (103 MB)](https://github.com/yashh1975/AGC-Billing/releases/download/v1.0.0/AGC-Billing-Setup-1.0.0.exe) · Self-contained Windows installer · Desktop & Start Menu shortcuts · Zero dependencies.
+> **Quick Download (v2.0.0)**: [AGC-Billing-Setup-1.0.0.exe (97.3 MB)](https://github.com/yashh1975/AGC-Billing/releases/download/v2.0.0/AGC-Billing-Setup-1.0.0.exe) · Self-contained Windows installer · Desktop & Start Menu shortcuts · Zero dependencies.
 
 ---
 
@@ -41,11 +41,10 @@ A specialized desktop billing software tailored for gold jewellery and financial
 
 * **Sales Billing (Gold Jewellery & Articles)**:
   * Full GST tax invoice generation under **HSN 7113** (3% GST).
-  * Accurate gold valuation calculation: `Taxable Value = Net Weight (Grams) × Rate per Gram (₹/g) + Making Charges - Discount`.
+  * Line-item breakdown: **Gross Weight**, **Net Weight**, **VA / Wastage (%)** (editable, default 9%), **Rate per Gram**, **Making Charges**, and **Discounts**.
   * Automatically calculates **Intra-State (1.5% CGST + 1.5% SGST)** vs. **Inter-State (3% IGST)** based on place of supply.
-  * Line-item breakdown: Gross Weight, Net Weight, Rate per Gram, Making Charges, and Discounts.
   * Built-in mathematical engine calculating in exact integer paise to eliminate rounding discrepancies.
-  * Real-time side-by-side **A4 Live Invoice Preview** and instant industrial-standard vector PDF generation.
+  * Real-time side-by-side **A4 Live Invoice Preview** (`100% Full View` & `Fit Screen`) synchronized 1:1 with the generated vector PDF.
   * Direct **WhatsApp Web Sharing** with pre-filled professional customer greeting and invoice details.
 
 * **Financial Services (Gold Loan Takeover, Release & Settlement)**:
@@ -58,17 +57,26 @@ A specialized desktop billing software tailored for gold jewellery and financial
 
 * **Dedicated Draft Bills Section (Estimates / Quotations)**:
   * Accessible directly from the left navigation bar under **Draft Bill**.
-  * Complete 3-in-1 billing capability: **Sales Draft**, **Financial Service Draft**, and **Dealer Purchase Draft**.
-  * **Zero Statutory Impact**: Draft bills **never consume GST invoice numbers**; instead, they generate reference estimate IDs (`EST-S-...`, `EST-SV-...`, `EST-P-...`).
-  * Explicitly excluded from CA statutory reports, GSTR-1, and financial registers until finalized.
+  * Complete 3-in-1 estimation capability aligned with Tax formats: **Sales Draft**, **Service Draft**, and **Dealer Purchase Draft** (with Gross Weight & VA / Wastage % support).
+  * **Pure Non-Statutory Estimates**: Draft bills carry **no GST calculation or GST tax columns** — displaying only clean estimation totals, party phone, and address.
+  * **Zero Statutory Impact**: Draft bills **never consume GST invoice numbers** (`EST-XXXX` series) and remain completely isolated from CA reports, supplier totals, search revenue, and dashboard GST metrics.
   * Watermarked as **`ESTIMATE / DRAFT BILL (FOR REFERENCE & ESTIMATION ONLY — NOT A TAX INVOICE)`**.
   * Full management suite: **View / Print A4**, **Share on WhatsApp**, and **Delete Draft** with confirmation.
 
 * **Dealer Purchase Recording**:
-  * Record inward dealer bills with supplier invoice number, dealer invoice date, supplier GSTIN, and gross/net weights.
+  * Record inward dealer bills with supplier invoice number (`DEALER BILL #`), dealer invoice date, supplier GSTIN, Gross/Net weights, and **VA / Wastage (%)**.
   * Drag-and-drop supplier invoice bill scan/PDF preservation.
   * Generates internal AGC audit slips stamped with:  
     `"INTERNAL PURCHASE RECORD – NOT A TAX INVOICE – FOR GSTR-2B VERIFICATION ONLY"`.
+
+* **Pledge Details & Excel Register**:
+  * Dedicated **Pledge Details** section with separate **Input Details** and **Pledged Records List** views.
+  * Tracks Date, Customer Name, **Pledged Name**, Address, Phone, Principal Amount, Interest (%), Pledge Date, Pledged Item, Pledge Place, Pledge Amount, Pledge Interest (%), and Active/Released status.
+  * **Strict Ledger Isolation**: Pledge records stay strictly inside **Pledge Details** (only the active pledge count is shown on the Dashboard) and are **never included** in CA Filing, GST Reports, or Billing Registers.
+  * Supports one-click **Excel Export (`.xlsx`)** and **View in Folder**.
+
+* **Complete Light & Dark Theme**:
+  * Header theme toggle lets you switch cleanly between the warm cream Light Theme and the high-contrast obsidian-and-gold Dark Theme across all 12 sections, while keeping A4 invoice previews crisp white-paper / black-ink for print fidelity.
 
 * **Audit-Ready Excel Reports for CA Filing**:
   * One-click master Excel workbook generation (`.xlsx`) containing 5 dedicated registers:
@@ -98,7 +106,7 @@ A specialized desktop billing software tailored for gold jewellery and financial
 
 ### Windows 10 / 11 (64-bit)
 
-1. **[Download AGC-Billing-Setup-1.0.0.exe](https://github.com/yashh1975/AGC-Billing/releases/download/v1.0.0/AGC-Billing-Setup-1.0.0.exe)** (about 103 MB).
+1. **[Download AGC-Billing-Setup-1.0.0.exe (v2.0.0)](https://github.com/yashh1975/AGC-Billing/releases/download/v2.0.0/AGC-Billing-Setup-1.0.0.exe)** (about 97.3 MB).
 2. **Double-click** the installer in your `Downloads` folder.  
    *(If Windows SmartScreen prompts "Windows protected your PC", click **More info** $\rightarrow$ **Run anyway**)*.
 3. The installer automatically configures program files, creates **Desktop** and **Start Menu** shortcuts, and launches the application.
@@ -116,7 +124,7 @@ A specialized desktop billing software tailored for gold jewellery and financial
   * **Application Binaries**: `C:\Users\<User>\AppData\Local\Programs\AGC Billing\`
   * **Business Database & Invoices**: `C:\Users\<User>\AppData\Roaming\agc-billing\AGC_Data\`
 * **Zero-Data-Loss Updates**: When installing future updates (e.g. `v1.0.1`), the installer only replaces application code in `Local\Programs`. It **never touches or deletes your database or documents** in `AppData\Roaming`.
-* **Automated & Manual Backups**: Go to **Settings $\rightarrow$ Backup & Restore** (or press `Ctrl + K`) to generate a timestamped, atomic SQLite database snapshot packaged into a verified `.zip` archive.
+* **Automated & Manual Backups**: Go to **Settings $\rightarrow$ Backup & Restore** to generate a timestamped, atomic SQLite database snapshot packaged into a verified `.zip` archive.
 
 ---
 
@@ -218,7 +226,7 @@ Developed with a modern, high-performance desktop architecture:
 * **Spreadsheet Generator**: `exceljs` styled multi-sheet workbooks with statutory GST formulas
 * **Packaging**: `electron-builder` with multi-resolution `.ico` mipmaps and NSIS Windows installer
 
-### Automated Test Suite (52/52 Tests):
+### Automated Test Suite (60/60 Tests):
 The project includes complete end-to-end unit tests verifying:
 * Mathematical GST precision in integer paise (CGST, SGST, IGST)
 * Gold jewellery valuation (`weight × rate per gram + making charges - discount`)
