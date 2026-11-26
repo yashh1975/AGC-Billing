@@ -1,6 +1,6 @@
 {
   "name": "agc-billing",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "AGC Billing & Management System",
   "main": "dist-electron/main/index.js",
   "scripts": {

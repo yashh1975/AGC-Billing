@@ -20,7 +20,7 @@
 A specialized desktop billing software tailored for gold jewellery and financial services: generate statutory sales tax invoices, record dealer purchase bills with attachment scans, issue takeover/re-pledging service receipts, and export complete audit-ready 5-tab Excel workbooks for your Chartered Accountant in seconds.
 
 <p align="center">
-  <a href="https://github.com/yashh1975/AGC-Billing/releases/download/v2.0.0/AGC-Billing-Setup-1.0.0.exe">
+  <a href="https://github.com/yashh1975/AGC-Billing/releases/download/v2.0.0/AGC-Billing-Setup-2.0.0.exe">
     <img src="https://img.shields.io/badge/%E2%AC%87%20WINDOWS%20SETUP%20(.EXE)-97.3%20MB-blue?style=for-the-badge&logo=windows" alt="Download for Windows" />
   </a>
   &nbsp;&nbsp;
@@ -33,7 +33,7 @@ A specialized desktop billing software tailored for gold jewellery and financial
   </a>
 </p>
 
-> **Quick Download (v2.0.0)**: [AGC-Billing-Setup-1.0.0.exe (97.3 MB)](https://github.com/yashh1975/AGC-Billing/releases/download/v2.0.0/AGC-Billing-Setup-1.0.0.exe) · Self-contained Windows installer · Desktop & Start Menu shortcuts · Zero dependencies.
+> **Quick Download (v2.0.0)**: [AGC-Billing-Setup-2.0.0.exe (97.3 MB)](https://github.com/yashh1975/AGC-Billing/releases/download/v2.0.0/AGC-Billing-Setup-2.0.0.exe) · Self-contained Windows installer · Desktop & Start Menu shortcuts · Zero dependencies.
 
 ---
 
@@ -106,7 +106,7 @@ A specialized desktop billing software tailored for gold jewellery and financial
 
 ### Windows 10 / 11 (64-bit)
 
-1. **[Download AGC-Billing-Setup-1.0.0.exe (v2.0.0)](https://github.com/yashh1975/AGC-Billing/releases/download/v2.0.0/AGC-Billing-Setup-1.0.0.exe)** (about 97.3 MB).
+1. **[Download AGC-Billing-Setup-2.0.0.exe (v2.0.0)](https://github.com/yashh1975/AGC-Billing/releases/download/v2.0.0/AGC-Billing-Setup-2.0.0.exe)** (about 97.3 MB).
 2. **Double-click** the installer in your `Downloads` folder.  
    *(If Windows SmartScreen prompts "Windows protected your PC", click **More info** $\rightarrow$ **Run anyway**)*.
 3. The installer automatically configures program files, creates **Desktop** and **Start Menu** shortcuts, and launches the application.
@@ -123,7 +123,7 @@ A specialized desktop billing software tailored for gold jewellery and financial
 * **OS-Level Separation of Code and Data**:
   * **Application Binaries**: `C:\Users\<User>\AppData\Local\Programs\AGC Billing\`
   * **Business Database & Invoices**: `C:\Users\<User>\AppData\Roaming\agc-billing\AGC_Data\`
-* **Zero-Data-Loss Updates**: When installing future updates (e.g. `v1.0.1`), the installer only replaces application code in `Local\Programs`. It **never touches or deletes your database or documents** in `AppData\Roaming`.
+* **Zero-Data-Loss Updates**: When installing future updates (e.g. `v2.0.1`), the installer only replaces application code in `Local\Programs`. It **never touches or deletes your database or documents** in `AppData\Roaming`.
 * **Automated & Manual Backups**: Go to **Settings $\rightarrow$ Backup & Restore** to generate a timestamped, atomic SQLite database snapshot packaged into a verified `.zip` archive.
 
 ---
@@ -180,7 +180,7 @@ Under Sections 2(52) and 2(102) of the CGST Act, 2017, pure money transactions (
 <br>
 
 **Your data is 100% safe and will never be lost.**  
-The software strictly separates code from data. The executable program lives in `AppData\Local\Programs\AGC Billing`, while your database (`agc-billing.db`), customer files, and invoices live in `AppData\Roaming\agc-billing\AGC_Data`. Running an update installer (e.g. `AGC-Billing-Setup-1.0.1.exe`) only updates the program binaries and leaves your entire business database untouched. In addition, automated Drizzle ORM migrations update the database schema seamlessly on startup.
+The software strictly separates code from data. The executable program lives in `AppData\Local\Programs\AGC Billing`, while your database (`agc-billing.db`), customer files, and invoices live in `AppData\Roaming\agc-billing\AGC_Data`. Running an update installer (e.g. `AGC-Billing-Setup-2.0.1.exe`) only updates the program binaries and leaves your entire business database untouched. In addition, automated Drizzle ORM migrations update the database schema seamlessly on startup.
 </details>
 
 <details>
@@ -207,7 +207,7 @@ Per explicit AGC company policy and statutory compliance guidelines, purity mark
 
 1. On your old computer, open **Settings $\rightarrow$ Backup & Restore** and click **Create Backup**.
 2. Copy the generated `.zip` backup file to a pen drive.
-3. On the new computer, install `AGC-Billing-Setup-1.0.0.exe`.
+3. On the new computer, install `AGC-Billing-Setup-2.0.0.exe`.
 4. Open the app, go to **Settings $\rightarrow$ Backup & Restore**, and click **Restore from Backup**. Your entire billing history, customers, and settings are restored in seconds.
 </details>
 
@@ -273,7 +273,7 @@ npm run package
 ```
 
 The compiled setup installer will be output to:  
-`release/AGC-Billing-Setup-1.0.0.exe`
+`release/AGC-Billing-Setup-2.0.0.exe`
 
 ---
 
