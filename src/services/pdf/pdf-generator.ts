@@ -340,8 +340,11 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
     const textWidth = isDraftDoc ? 66 : (isService ? 48 : 42);
     const lines: string[] = doc.splitTextToSize(desc, textWidth);
     const numLines = Math.max(1, lines.length);
-    if (numLines <= 1) return 8.2;
-    return Math.max(12.0, 3.0 + (numLines * 3.2) + 2.8);
+    // Add extra 3.2mm row height when MC sub-line is present (sales only)
+    const hasMCLine = data.type === 'sales' && !!(item.makingChargesPaise && item.makingChargesPaise > 0);
+    const mcExtra = hasMCLine ? 3.2 : 0;
+    if (numLines <= 1) return 8.2 + mcExtra;
+    return Math.max(12.0, 3.0 + (numLines * 3.2) + 2.8) + mcExtra;
   };
 
   const getPageChunks = (): PageChunk[] => {
@@ -659,13 +662,25 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       if (!isService && item.vaPercent && item.vaPercent > 0) {
         subLabel += `  |  VA: ${item.vaPercent}%`;
       }
-      if (data.type === 'sales' && item.makingChargesPaise && item.makingChargesPaise > 0) {
-        subLabel += `  |  MC: Rs.${Math.round(item.makingChargesPaise / 100).toLocaleString('en-IN')}`;
+      const mcAmountRs = data.type === 'sales' && item.makingChargesPaise && item.makingChargesPaise > 0
+        ? Math.round(item.makingChargesPaise / 100)
+        : 0;
+      const hasMC = mcAmountRs > 0;
+      if (hasMC) {
+        subLabel += `  |  MC: Rs.${mcAmountRs.toLocaleString('en-IN')}`;
       }
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6.5);
       doc.setTextColor(0, 0, 0);
-      doc.text(subLabel, descLeftX, codeY);
+      // Split subLabel onto two lines when MC is present to prevent overflow out of the description column
+      if (hasMC) {
+        const mcText = `MC: Rs.${mcAmountRs.toLocaleString('en-IN')}`;
+        const baseLabel = subLabel.replace(/\s*\|\s*MC: Rs\.[\d,]+$/, '');
+        doc.text(baseLabel, descLeftX, codeY);
+        doc.text(mcText, descLeftX, codeY + 3.2);
+      } else {
+        doc.text(subLabel, descLeftX, codeY);
+      }
 
       // Vertically centered alignment for all other columns
       const midY = rowY + (thisRowHeight / 2) + 0.8;
