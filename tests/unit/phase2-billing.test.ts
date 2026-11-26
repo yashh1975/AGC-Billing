@@ -173,6 +173,32 @@ describe('Phase 2 - GST Engine & Core Billing Calculations', () => {
       expect(summary.grandTotalPaise).toBe(10873700); // ₹1,08,737.00 (rounded off to nearest rupee)
     });
 
+    it('draft/estimate bills omit GST calculation completely and return pure estimation amount', () => {
+      const items = [
+        {
+          description: 'Gold Necklace Estimate',
+          hsnCode: '7113',
+          quantity: 1,
+          grossWeight: 10.0,
+          netWeight: 10.0,
+          rate: 7000,
+          vaPercent: 9,
+          makingCharges: 0,
+          discount: 0,
+          gstRate: 3, // Even if 3% is present, isDraft=true forces zero GST
+        },
+      ];
+
+      const summary = calculateInvoice(items, 'Karnataka', 'Karnataka', 0, 'sales', true);
+      expect(summary.totalVaAmountPaise).toBe(630000); // ₹6,300.00
+      expect(summary.taxableAmountPaise).toBe(7630000); // ₹76,300.00
+      expect(summary.cgstAmountPaise).toBe(0);
+      expect(summary.sgstAmountPaise).toBe(0);
+      expect(summary.igstAmountPaise).toBe(0);
+      expect(summary.totalGstAmountPaise).toBe(0);
+      expect(summary.grandTotalPaise).toBe(7630000); // Strictly estimation amount, NO GST
+    });
+
     it('financial service bill applies 18% GST strictly to service fee and ignores loan principal', () => {
       // ₹1,00,000 Loan Takeover principal, ₹500 Service Fee -> 18% GST on ₹500 = ₹90 tax -> Total ₹590
       const items = [

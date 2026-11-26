@@ -124,7 +124,8 @@ export function determineSupplyType(
 export function calculateLineItem(
   item: LineItemInput,
   supplyType: 'intra' | 'inter',
-  docType?: 'sales' | 'purchase' | 'service'
+  docType?: 'sales' | 'purchase' | 'service',
+  isDraft: boolean = false
 ): LineItemCalculation {
   const quantity = Math.max(item.quantity || 1, 1);
   const ratePaise = toPaise(item.rate);
@@ -136,7 +137,7 @@ export function calculateLineItem(
   const makingChargesPaise = toPaise(item.makingCharges);
   const otherChargesPaise = toPaise(item.otherCharges);
   const discountPaise = toPaise(item.discount);
-  const gstRate = item.gstRate || 0;
+  const gstRate = isDraft ? 0 : (item.gstRate || 0);
 
   // Calculate Base Gross Amount in Paise:
   // 1. If financial service: base amount is strictly the service facilitation charge (principal is never taxed)
@@ -242,7 +243,8 @@ export function calculateInvoice(
   companyState: string = 'Karnataka',
   placeOfSupply: string = 'Karnataka',
   amountReceivedRupees: number = 0,
-  docType?: 'sales' | 'purchase' | 'service'
+  docType?: 'sales' | 'purchase' | 'service',
+  isDraft: boolean = false
 ): InvoiceCalculationSummary {
   const supplyType = determineSupplyType(companyState, placeOfSupply);
 
@@ -257,7 +259,7 @@ export function calculateInvoice(
   let igstAmountPaise = 0;
 
   const calculatedItems = items.map((item) => {
-    const calc = calculateLineItem(item, supplyType, docType);
+    const calc = calculateLineItem(item, supplyType, docType, isDraft);
 
     subtotalPaise += calc.ratePaise * calc.quantity;
     totalDiscountPaise += calc.discountPaise;

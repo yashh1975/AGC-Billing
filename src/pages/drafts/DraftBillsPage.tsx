@@ -66,6 +66,8 @@ export function DraftBillsPage() {
   // Masters for creation
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [selectedPartyId, setSelectedPartyId] = useState<number | null>(null);
+  const [partySearch, setPartySearch] = useState('');
 
   // Create Form State - Common Party
   const [partyForm, setPartyForm] = useState({
@@ -81,7 +83,36 @@ export function DraftBillsPage() {
   const [draftDate, setDraftDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
 
-  // Create Form State - Sales Items
+  const handleSelectParty = (party: Customer | Supplier) => {
+    setSelectedPartyId(party.id);
+    setPartyForm({
+      name: party.name,
+      mobile: party.mobile || '',
+      address: party.address || '',
+      city: party.city || 'Bengaluru',
+      state: party.state || 'Karnataka',
+      stateCode: party.state_code || '29',
+      gstin: party.gstin || '',
+    });
+    setPlaceOfSupply((party as Customer).place_of_supply || party.state || 'Karnataka');
+    setPartySearch('');
+  };
+
+  const handleClearParty = () => {
+    setSelectedPartyId(null);
+    setPartyForm({
+      name: '',
+      mobile: '',
+      address: '',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      stateCode: '29',
+      gstin: '',
+    });
+    setPlaceOfSupply('Karnataka');
+  };
+
+  // Create Form State - Sales Items (Estimate: NO GST)
   const [salesItems, setSalesItems] = useState<LineItemInput[]>([
     {
       description: 'Gold Jewellery Article',
@@ -95,12 +126,12 @@ export function DraftBillsPage() {
       makingCharges: 0,
       otherCharges: 0,
       discount: 0,
-      gstRate: 3,
+      gstRate: 0,
       isTaxInclusive: false,
     },
   ]);
 
-  // Create Form State - Service Items
+  // Create Form State - Service Items (Estimate: NO GST)
   const [serviceItems, setServiceItems] = useState<LineItemInput[]>([
     {
       description: 'Gold Loan Takeover & Release Service',
@@ -113,17 +144,17 @@ export function DraftBillsPage() {
       makingCharges: 0,
       otherCharges: 0,
       discount: 0,
-      gstRate: 18,
+      gstRate: 0,
       isTaxInclusive: false,
     },
   ]);
 
-  // Create Form State - Purchase Items
+  // Create Form State - Purchase Items (Estimate: NO GST, Wastage VA %)
   const [purchaseItems, setPurchaseItems] = useState<LineItemInput[]>([
     {
       description: 'Gold Jewellery Inward Estimate',
       category: 'Gold Bullion',
-      hsnCode: '7113',
+      hsnCode: '7108',
       quantity: 1,
       grossWeight: 15.0,
       netWeight: 15.0,
@@ -132,7 +163,7 @@ export function DraftBillsPage() {
       makingCharges: 0, // No making charges for dealer
       otherCharges: 0,
       discount: 0,
-      gstRate: 3,
+      gstRate: 0,
       isTaxInclusive: false,
     },
   ]);
@@ -385,7 +416,8 @@ export function DraftBillsPage() {
     'Karnataka',
     placeOfSupply,
     0,
-    draftType
+    draftType,
+    true // Draft / Estimate: NO GST calculation
   );
 
   // Convert items for LiveInvoicePreview
@@ -402,7 +434,7 @@ export function DraftBillsPage() {
     makingCharges: it.makingCharges,
     vaPercent: it.vaPercent,
     discount: it.discount,
-    gstRate: it.gstRate,
+    gstRate: 0,
   }));
 
   // Handle Save Draft Bill
@@ -437,20 +469,24 @@ export function DraftBillsPage() {
     setIsSaving(true);
     try {
       let res: any = null;
+      const partyPayload = { ...partyForm, state: placeOfSupply || partyForm.state };
+
       if (draftType === 'sales') {
         res = await window.api.db.salesInvoices.create({
           invoiceNumber: nextEstimateNo,
           financialYearId: activeYear.id,
-          customer: partyForm,
+          customerId: selectedPartyId,
+          customer: partyPayload,
           invoiceDate: draftDate,
           placeOfSupply,
           supplyType: currentCalc.supplyType,
           subtotal: currentCalc.subtotalPaise,
           totalDiscount: currentCalc.totalDiscountPaise,
+          totalMakingCharges: currentCalc.totalMakingChargesPaise,
           taxableAmount: currentCalc.taxableAmountPaise,
-          cgstAmount: currentCalc.cgstAmountPaise,
-          sgstAmount: currentCalc.sgstAmountPaise,
-          igstAmount: currentCalc.igstAmountPaise,
+          cgstAmount: 0,
+          sgstAmount: 0,
+          igstAmount: 0,
           roundOff: currentCalc.roundOffPaise,
           grandTotal: currentCalc.grandTotalPaise,
           amountReceived: 0,
@@ -464,16 +500,17 @@ export function DraftBillsPage() {
         res = await window.api.db.serviceInvoices.create({
           invoiceNumber: nextEstimateNo,
           financialYearId: activeYear.id,
-          customer: partyForm,
+          customerId: selectedPartyId,
+          customer: partyPayload,
           invoiceDate: draftDate,
           placeOfSupply,
           supplyType: currentCalc.supplyType,
           subtotal: currentCalc.subtotalPaise,
           totalDiscount: currentCalc.totalDiscountPaise,
           taxableAmount: currentCalc.taxableAmountPaise,
-          cgstAmount: currentCalc.cgstAmountPaise,
-          sgstAmount: currentCalc.sgstAmountPaise,
-          igstAmount: currentCalc.igstAmountPaise,
+          cgstAmount: 0,
+          sgstAmount: 0,
+          igstAmount: 0,
           roundOff: currentCalc.roundOffPaise,
           grandTotal: currentCalc.grandTotalPaise,
           amountReceived: 0,
@@ -487,16 +524,17 @@ export function DraftBillsPage() {
         res = await window.api.db.dealerPurchases.create({
           recordNumber: nextEstimateNo,
           financialYearId: activeYear.id,
-          supplier: partyForm,
+          supplierId: selectedPartyId,
+          supplier: partyPayload,
           recordDate: draftDate,
           placeOfSupply,
           supplyType: currentCalc.supplyType,
           subtotal: currentCalc.subtotalPaise,
           totalDiscount: currentCalc.totalDiscountPaise,
           taxableAmount: currentCalc.taxableAmountPaise,
-          cgstAmount: currentCalc.cgstAmountPaise,
-          sgstAmount: currentCalc.sgstAmountPaise,
-          igstAmount: currentCalc.igstAmountPaise,
+          cgstAmount: 0,
+          sgstAmount: 0,
+          igstAmount: 0,
           roundOff: currentCalc.roundOffPaise,
           grandTotal: currentCalc.grandTotalPaise,
           amountPaid: 0,
@@ -515,8 +553,30 @@ export function DraftBillsPage() {
           variant: 'success',
         });
         await refreshEstimateNumber();
-        setActiveTab('list');
         loadDrafts();
+
+        // Open Preview & Print Engine immediately so user can print / open in default browser
+        let fullDoc: any = null;
+        if (draftType === 'sales') {
+          const fRes = await window.api.db.salesInvoices.getById(res.data.id);
+          if (fRes.success) fullDoc = fRes.data;
+        } else if (draftType === 'purchase') {
+          const fRes = await window.api.db.dealerPurchases.getById(res.data.id);
+          if (fRes.success) fullDoc = fRes.data;
+        } else if (draftType === 'service') {
+          const fRes = await window.api.db.serviceInvoices.getById(res.data.id);
+          if (fRes.success) fullDoc = fRes.data;
+        }
+
+        if (fullDoc) {
+          setPreviewModal({
+            isOpen: true,
+            type: draftType,
+            data: { ...fullDoc, isDraft: true },
+          });
+        } else {
+          setActiveTab('list');
+        }
       } else {
         toast({
           title: 'Creation Failed',
@@ -643,22 +703,20 @@ export function DraftBillsPage() {
                     <th className="p-3 font-bold">Date</th>
                     <th className="p-3 font-bold">Type</th>
                     <th className="p-3 font-bold">Customer / Supplier</th>
-                    <th className="p-3 text-right font-bold">Taxable Value</th>
-                    <th className="p-3 text-right font-bold">GST</th>
-                    <th className="p-3 text-right font-bold">Estimate Total</th>
+                    <th className="p-3 text-right font-bold">Estimate Amount</th>
                     <th className="p-3 text-center font-bold w-36">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E7E2D7] bg-white">
                   {isLoading ? (
                     <tr>
-                      <td colSpan={9} className="p-8 text-center text-gray-500 italic">
+                      <td colSpan={7} className="p-8 text-center text-gray-500 italic">
                         Loading draft bills...
                       </td>
                     </tr>
                   ) : filteredDrafts.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="p-8 text-center text-gray-500 italic">
+                      <td colSpan={7} className="p-8 text-center text-gray-500 italic">
                         No draft estimation bills found. Click "+ New Draft Bill" to generate one.
                       </td>
                     </tr>
@@ -695,14 +753,8 @@ export function DraftBillsPage() {
                               </div>
                             )}
                           </td>
-                          <td className="p-3 text-right font-medium">
-                            ₹{(draft.taxable_value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </td>
-                          <td className="p-3 text-right font-medium text-gray-600">
-                            ₹{(draft.total_tax || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </td>
                           <td className="p-3 text-right font-extrabold text-[#171717] whitespace-nowrap">
-                            ₹{(draft.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ₹{(draft.taxable_value || draft.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                           <td className="p-3 text-center whitespace-nowrap">
                             <div className="flex items-center justify-center gap-1.5">
@@ -759,7 +811,10 @@ export function DraftBillsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               type="button"
-              onClick={() => setDraftType('sales')}
+              onClick={() => {
+                if (draftType === 'purchase') handleClearParty();
+                setDraftType('sales');
+              }}
               className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer flex items-center gap-3 ${
                 draftType === 'sales'
                   ? 'border-[#C49A35] bg-[#F8F2E4] shadow-xs'
@@ -770,14 +825,17 @@ export function DraftBillsPage() {
                 <Receipt className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-sm font-bold text-[#171717]">1. Sales Draft</div>
-                <div className="text-[11px] text-gray-500">Gold jewellery estimation (Gram Rate & Making)</div>
+                <div className="text-sm font-bold text-[#171717]">1. Sales Estimate</div>
+                <div className="text-[11px] text-gray-500">Gold jewellery estimation (Gross/Net Wt, Rate, VA, Making)</div>
               </div>
             </button>
 
             <button
               type="button"
-              onClick={() => setDraftType('service')}
+              onClick={() => {
+                if (draftType === 'purchase') handleClearParty();
+                setDraftType('service');
+              }}
               className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer flex items-center gap-3 ${
                 draftType === 'service'
                   ? 'border-[#C49A35] bg-[#F8F2E4] shadow-xs'
@@ -788,14 +846,17 @@ export function DraftBillsPage() {
                 <Wrench className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-sm font-bold text-[#171717]">2. Financial Services Draft</div>
+                <div className="text-sm font-bold text-[#171717]">2. Financial Services Estimate</div>
                 <div className="text-[11px] text-gray-500">Loan takeover & release (Principal & Fee)</div>
               </div>
             </button>
 
             <button
               type="button"
-              onClick={() => setDraftType('purchase')}
+              onClick={() => {
+                if (draftType !== 'purchase') handleClearParty();
+                setDraftType('purchase');
+              }}
               className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer flex items-center gap-3 ${
                 draftType === 'purchase'
                   ? 'border-[#C49A35] bg-[#F8F2E4] shadow-xs'
@@ -806,8 +867,8 @@ export function DraftBillsPage() {
                 <ShoppingCart className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-sm font-bold text-[#171717]">3. Dealer Purchase Draft</div>
-                <div className="text-[11px] text-gray-500">Inward gold purchase estimation from dealers</div>
+                <div className="text-sm font-bold text-[#171717]">3. Dealer Purchase Estimate</div>
+                <div className="text-[11px] text-gray-500">Inward gold purchase estimation (Gross/Net Wt, Rate, VA)</div>
               </div>
             </button>
           </div>
@@ -818,9 +879,61 @@ export function DraftBillsPage() {
             <div className="lg:col-span-7 space-y-6">
               {/* Party Information */}
               <Card className="p-5 space-y-4 shadow-xs">
-                <h3 className="text-sm font-bold text-[#171717] border-b border-[#E7E2D7] pb-2">
-                  {draftType === 'purchase' ? 'Supplier Details' : 'Customer Details'} (Draft Bill)
-                </h3>
+                <div className="flex items-center justify-between border-b border-[#E7E2D7] pb-2">
+                  <h3 className="text-sm font-bold text-[#171717]">
+                    {draftType === 'purchase' ? 'Supplier Details' : 'Customer Details'} (Estimate / Draft Bill)
+                  </h3>
+                  {selectedPartyId && (
+                    <button
+                      type="button"
+                      onClick={handleClearParty}
+                      className="text-xs text-[#A98226] hover:underline cursor-pointer"
+                    >
+                      Clear Selection
+                    </button>
+                  )}
+                </div>
+
+                {/* Quick Party Search Picker */}
+                {!selectedPartyId && (
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-gray-400" />
+                    <Input
+                      placeholder={`Search existing ${draftType === 'purchase' ? 'dealer/supplier' : 'customer'} by name, mobile, or GSTIN...`}
+                      value={partySearch}
+                      onChange={(e) => setPartySearch(e.target.value)}
+                      className="pl-9 text-sm h-9"
+                    />
+                    {partySearch.trim().length > 1 && (
+                      <div className="absolute left-0 right-0 top-10 bg-white border border-[#E7E2D7] rounded-md shadow-lg z-20 max-h-48 overflow-y-auto divide-y divide-[#E7E2D7]">
+                        {(draftType === 'purchase' ? suppliers : customers)
+                          .filter(
+                            (p) =>
+                              p.name.toLowerCase().includes(partySearch.toLowerCase()) ||
+                              (p.mobile && p.mobile.includes(partySearch)) ||
+                              (p.gstin && p.gstin.toLowerCase().includes(partySearch.toLowerCase()))
+                          )
+                          .slice(0, 5)
+                          .map((p) => (
+                            <div
+                              key={p.id}
+                              onClick={() => handleSelectParty(p)}
+                              className="p-2.5 hover:bg-amber-50 cursor-pointer text-xs flex justify-between items-center"
+                            >
+                              <div>
+                                <span className="font-bold text-[#171717]">{p.name}</span>
+                                <span className="text-gray-500 ml-2">({p.mobile || 'No mobile'})</span>
+                              </div>
+                              <span className="text-xs text-[#A98226] font-semibold">
+                                {p.reference_number}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs font-semibold">Party Name *</Label>
@@ -841,7 +954,24 @@ export function DraftBillsPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs font-semibold">Draft Date</Label>
+                    <Label className="text-xs font-semibold">GSTIN (Optional)</Label>
+                    <Input
+                      placeholder="15-digit GSTIN (optional)"
+                      value={partyForm.gstin}
+                      onChange={(e) => setPartyForm({ ...partyForm, gstin: e.target.value.toUpperCase() })}
+                      className="h-9 text-sm font-mono uppercase"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold">Place of Supply (State)</Label>
+                    <Input
+                      value={placeOfSupply}
+                      onChange={(e) => setPlaceOfSupply(e.target.value)}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold">Estimate Date</Label>
                     <Input
                       type="date"
                       value={draftDate}
@@ -850,17 +980,9 @@ export function DraftBillsPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs font-semibold">Place of Supply</Label>
-                    <Input
-                      value={placeOfSupply}
-                      onChange={(e) => setPlaceOfSupply(e.target.value)}
-                      className="h-9 text-sm"
-                    />
-                  </div>
-                  <div className="space-y-1 sm:col-span-2">
                     <Label className="text-xs font-semibold">Address</Label>
                     <Input
-                      placeholder="Customer / Supplier address (optional, leave blank if none)"
+                      placeholder="Street address, locality, city (optional)"
                       value={partyForm.address}
                       onChange={(e) => setPartyForm({ ...partyForm, address: e.target.value })}
                       className="h-9 text-sm"
@@ -872,9 +994,14 @@ export function DraftBillsPage() {
               {/* Line Items Card */}
               <Card className="p-5 space-y-4 shadow-xs">
                 <div className="flex items-center justify-between border-b border-[#E7E2D7] pb-2">
-                  <h3 className="text-sm font-bold text-[#171717]">
-                    Line Items ({draftType === 'service' ? 'Financial Services' : 'Gold Items'})
-                  </h3>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#171717]">
+                      Line Items ({draftType === 'service' ? 'Financial Services' : draftType === 'purchase' ? 'Dealer Purchase Items' : 'Gold Jewellery Items'})
+                    </h3>
+                    <p className="text-[11px] text-gray-500">
+                      Estimation only — no GST applied
+                    </p>
+                  </div>
                   <Button
                     size="sm"
                     variant="outline"
@@ -891,7 +1018,7 @@ export function DraftBillsPage() {
                             serviceAmount: 500,
                             rate: 500,
                             discount: 0,
-                            gstRate: 18,
+                            gstRate: 0,
                           },
                         ]);
                       } else if (draftType === 'sales') {
@@ -908,7 +1035,7 @@ export function DraftBillsPage() {
                             vaPercent: 9,
                             makingCharges: 0,
                             discount: 0,
-                            gstRate: 3,
+                            gstRate: 0,
                           },
                         ]);
                       } else {
@@ -918,7 +1045,7 @@ export function DraftBillsPage() {
                           {
                             description: 'Gold Jewellery Inward Estimate',
                             category: 'Gold Bullion',
-                            hsnCode: '7113',
+                            hsnCode: '7108',
                             quantity: 1,
                             grossWeight: 5.0,
                             netWeight: 5.0,
@@ -926,7 +1053,7 @@ export function DraftBillsPage() {
                             vaPercent: 0,
                             makingCharges: 0,
                             discount: 0,
-                            gstRate: 3,
+                            gstRate: 0,
                           },
                         ]);
                       }
@@ -939,39 +1066,44 @@ export function DraftBillsPage() {
                 </div>
 
                 <div className="overflow-x-auto rounded border border-[#E7E2D7]">
-                  <table className="w-full text-xs text-left">
+                  <table className="w-full text-xs text-left min-w-[780px]">
                     <thead className="bg-[#F8F2E4] border-b border-[#E7E2D7] text-[#171717]">
                       {draftType === 'service' ? (
                         <tr>
                           <th className="p-2 w-48 font-bold">Service Description</th>
+                          <th className="p-2 w-20 text-center font-bold">SAC</th>
                           <th className="p-2 w-28 text-right font-bold">Principal Amt (₹)</th>
                           <th className="p-2 w-28 text-right font-bold">Service Fee (₹)</th>
-                          <th className="p-2 w-16 text-center font-bold">GST %</th>
-                          <th className="p-2 w-24 text-right font-bold">Taxable</th>
+                          <th className="p-2 w-20 text-right font-bold">Disc (₹)</th>
+                          <th className="p-2 w-28 text-right font-bold">Estimate Amt</th>
                           <th className="p-2 w-10 text-center"></th>
                         </tr>
                       ) : draftType === 'sales' ? (
                         <tr>
                           <th className="p-2 w-40 font-bold">Description</th>
+                          <th className="p-2 w-20 text-center font-bold">HSN</th>
+                          <th className="p-2 w-16 text-center font-bold">Qty</th>
                           <th className="p-2 w-20 text-center font-bold">Gross Wt (g)</th>
                           <th className="p-2 w-20 text-center font-bold">Net Wt (g)</th>
                           <th className="p-2 w-20 text-right font-bold">Rate/g (₹)</th>
                           <th className="p-2 w-16 text-center font-bold">VA %</th>
                           <th className="p-2 w-20 text-right font-bold">Making (₹)</th>
-                          <th className="p-2 w-16 text-center font-bold">GST %</th>
-                          <th className="p-2 w-24 text-right font-bold">Taxable</th>
+                          <th className="p-2 w-20 text-right font-bold">Disc (₹)</th>
+                          <th className="p-2 w-28 text-right font-bold">Estimate Amt</th>
                           <th className="p-2 w-10 text-center"></th>
                         </tr>
                       ) : (
-                        /* Dealer Inward Estimation: Gross Wt, Net Wt, Rate, Wastage (VA) - NO Making! */
+                        /* Dealer Inward Estimation: Matches Tax Dealer Purchase minus GST */
                         <tr>
                           <th className="p-2 w-44 font-bold">Description</th>
+                          <th className="p-2 w-20 text-center font-bold">HSN</th>
+                          <th className="p-2 w-16 text-center font-bold">Qty</th>
                           <th className="p-2 w-20 text-center font-bold">Gross Wt (g)</th>
                           <th className="p-2 w-20 text-center font-bold">Net Wt (g)</th>
                           <th className="p-2 w-24 text-right font-bold">Rate/g (₹)</th>
                           <th className="p-2 w-20 text-center font-bold">Wastage (VA %)</th>
-                          <th className="p-2 w-16 text-center font-bold">GST %</th>
-                          <th className="p-2 w-24 text-right font-bold">Taxable</th>
+                          <th className="p-2 w-20 text-right font-bold">Disc (₹)</th>
+                          <th className="p-2 w-28 text-right font-bold">Estimate Amt</th>
                           <th className="p-2 w-10 text-center"></th>
                         </tr>
                       )}
@@ -994,6 +1126,17 @@ export function DraftBillsPage() {
                             </td>
                             {draftType === 'service' ? (
                               <>
+                                <td className="p-1.5">
+                                  <Input
+                                    value={item.sacCode || '9971'}
+                                    onChange={(e) => {
+                                      const upd = [...currentItems];
+                                      upd[idx].sacCode = e.target.value;
+                                      currentSetItems(upd);
+                                    }}
+                                    className="h-8 text-xs font-mono text-center"
+                                  />
+                                </td>
                                 <td className="p-1.5">
                                   <Input
                                     type="number"
@@ -1022,9 +1165,46 @@ export function DraftBillsPage() {
                                     className="h-8 text-xs text-right font-bold"
                                   />
                                 </td>
+                                <td className="p-1.5">
+                                  <Input
+                                    type="number"
+                                    value={item.discount || ''}
+                                    placeholder="0"
+                                    onChange={(e) => {
+                                      const upd = [...currentItems];
+                                      upd[idx].discount = parseFloat(e.target.value) || 0;
+                                      currentSetItems(upd);
+                                    }}
+                                    className="h-8 text-xs text-right"
+                                  />
+                                </td>
                               </>
                             ) : draftType === 'sales' ? (
                               <>
+                                <td className="p-1.5">
+                                  <Input
+                                    value={item.hsnCode || '7113'}
+                                    onChange={(e) => {
+                                      const upd = [...currentItems];
+                                      upd[idx].hsnCode = e.target.value;
+                                      currentSetItems(upd);
+                                    }}
+                                    className="h-8 text-xs font-mono text-center"
+                                  />
+                                </td>
+                                <td className="p-1.5">
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={item.quantity}
+                                    onChange={(e) => {
+                                      const upd = [...currentItems];
+                                      upd[idx].quantity = parseInt(e.target.value, 10) || 1;
+                                      currentSetItems(upd);
+                                    }}
+                                    className="h-8 text-xs text-center"
+                                  />
+                                </td>
                                 <td className="p-1.5">
                                   <Input
                                     type="number"
@@ -1098,10 +1278,47 @@ export function DraftBillsPage() {
                                     className="h-8 text-xs text-right"
                                   />
                                 </td>
+                                <td className="p-1.5">
+                                  <Input
+                                    type="number"
+                                    value={item.discount || ''}
+                                    placeholder="0"
+                                    onChange={(e) => {
+                                      const upd = [...currentItems];
+                                      upd[idx].discount = parseFloat(e.target.value) || 0;
+                                      currentSetItems(upd);
+                                    }}
+                                    className="h-8 text-xs text-right"
+                                  />
+                                </td>
                               </>
                             ) : (
                               /* Dealer Inward Estimation */
                               <>
+                                <td className="p-1.5">
+                                  <Input
+                                    value={item.hsnCode || '7108'}
+                                    onChange={(e) => {
+                                      const upd = [...currentItems];
+                                      upd[idx].hsnCode = e.target.value;
+                                      currentSetItems(upd);
+                                    }}
+                                    className="h-8 text-xs font-mono text-center"
+                                  />
+                                </td>
+                                <td className="p-1.5">
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={item.quantity}
+                                    onChange={(e) => {
+                                      const upd = [...currentItems];
+                                      upd[idx].quantity = parseInt(e.target.value, 10) || 1;
+                                      currentSetItems(upd);
+                                    }}
+                                    className="h-8 text-xs text-center"
+                                  />
+                                </td>
                                 <td className="p-1.5">
                                   <Input
                                     type="number"
@@ -1163,20 +1380,21 @@ export function DraftBillsPage() {
                                     title="Wastage (VA %)"
                                   />
                                 </td>
+                                <td className="p-1.5">
+                                  <Input
+                                    type="number"
+                                    value={item.discount || ''}
+                                    placeholder="0"
+                                    onChange={(e) => {
+                                      const upd = [...currentItems];
+                                      upd[idx].discount = parseFloat(e.target.value) || 0;
+                                      currentSetItems(upd);
+                                    }}
+                                    className="h-8 text-xs text-right"
+                                  />
+                                </td>
                               </>
                             )}
-                            <td className="p-1.5">
-                              <Input
-                                type="number"
-                                value={item.gstRate}
-                                onChange={(e) => {
-                                  const upd = [...currentItems];
-                                  upd[idx].gstRate = parseFloat(e.target.value) || 0;
-                                  currentSetItems(upd);
-                                }}
-                                className="h-8 text-xs text-center"
-                              />
-                            </td>
                             <td className="p-1.5 text-right font-bold text-xs whitespace-nowrap">
                               {formatRupees(calc?.taxableValuePaise)}
                             </td>
@@ -1232,6 +1450,7 @@ export function DraftBillsPage() {
                 invoiceDate={draftDate}
                 partyName={partyForm.name}
                 partyMobile={partyForm.mobile}
+                partyGstin={partyForm.gstin}
                 partyAddress={partyForm.address}
                 placeOfSupply={placeOfSupply}
                 items={previewLiveItems}
@@ -1251,7 +1470,10 @@ export function DraftBillsPage() {
         <InvoicePrintView
           open={previewModal.isOpen}
           onOpenChange={(v) => {
-            if (!v) setPreviewModal({ isOpen: false, type: 'sales', data: null });
+            if (!v) {
+              setPreviewModal({ isOpen: false, type: 'sales', data: null });
+              setActiveTab('list');
+            }
           }}
           type={previewModal.type}
           record={previewModal.data}

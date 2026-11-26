@@ -286,8 +286,12 @@ describe('Phase 3 - PDF Generation, Folder Vault & WhatsApp Engine', () => {
     expect(draftText).toContain('SERVICE ESTIMATE / QUOTATION');
     expect(draftText).toContain('FOR REFERENCE & ESTIMATION ONLY');
     expect(draftText).toContain('EST-0006');
+    expect(draftText).toContain('Estimate Amt');
+    expect(draftText).toContain('Total Estimate Value');
+    expect(draftText).not.toContain('Amt & Rate');
     expect(draftText).toContain('GSTIN: 29ACKFA4620Q1ZV');
     expect(draftText).toContain('anjaneyagoldcompany@gmail.com');
+    expect(draftText).toContain('PH: 9008477669');
     expect(draftText).toContain('PH: 9008477669');
 
     // Service original invoice
@@ -302,6 +306,25 @@ describe('Phase 3 - PDF Generation, Folder Vault & WhatsApp Engine', () => {
     expect(invoiceText).toContain('SERVICE TAX INVOICE');
     expect(invoiceText).not.toContain('FOR REFERENCE & ESTIMATION ONLY');
     expect(invoiceText).toContain('SRV/2026-27/0001');
+    expect(invoiceText).toContain('Total Invoice Value');
     expect(invoiceText).toContain('GSTIN: 29ACKFA4620Q1ZV');
+  });
+
+  it('draft PDF renders customer mobile without repeating Karnataka on left side when address is empty', () => {
+    const noAddrDraft: InvoicePdfData = {
+      ...sampleInvoiceData,
+      documentNumber: 'EST-0007',
+      isDraft: true,
+      partyAddress: '',
+      partyMobile: '9876543210',
+      partyGstin: '',
+      placeOfSupply: 'Karnataka',
+    };
+    const doc = generateInvoicePdf(noAddrDraft);
+    const text = doc.output();
+    expect(text).toContain('PH: 9876543210');
+    expect(text).toContain('ESTIMATE / NON-STATUTORY');
+    expect(text).not.toContain('INTRASTATE');
+    expect(text).not.toContain('Amt & Rate');
   });
 });

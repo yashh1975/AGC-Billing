@@ -231,7 +231,7 @@ export function SalesBillingPage() {
       const payload = {
         financialYearId: activeYear.id,
         customerId: selectedCustomerId,
-        customer: selectedCustomerId ? null : customerForm,
+        customer: customerForm,
         invoiceDate,
         placeOfSupply,
         supplyType: calculation.supplyType,
@@ -759,8 +759,6 @@ export function SalesBillingPage() {
             partyMobile={customerForm.mobile}
             partyGstin={customerForm.gstin}
             partyAddress={customerForm.address}
-            partyCity={customerForm.city}
-            partyState={customerForm.state}
             placeOfSupply={placeOfSupply}
             items={items}
             notes={notes}

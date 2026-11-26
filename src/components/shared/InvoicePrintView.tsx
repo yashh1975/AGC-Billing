@@ -204,8 +204,9 @@ export function InvoicePrintView({ open, onOpenChange, data: initialData, record
     principalAmount: (it.principalAmountPaise || 0) / 100,
     serviceAmount: (it.serviceAmountPaise || 0) / 100,
     makingCharges: (it.makingChargesPaise || 0) / 100,
+    vaPercent: it.vaPercent || 0,
     discount: (it.discountPaise || 0) / 100,
-    gstRate: it.gstRate,
+    gstRate: data.isDraft ? 0 : it.gstRate,
   }));
 
   return (

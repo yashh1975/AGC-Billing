@@ -294,31 +294,31 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
   }
 
   // Column boundaries calibrated for 182mm content width (x: 14 to 196)
-  // For Service:
-  // Col 0: Sr (14 to 23 = 9mm)
-  // Col 1: Service Description & SAC (23 to 75 = 52mm)
-  // Col 2: Principal Loan Amt (75 to 103 = 28mm)
-  // Col 3: Service Fee (103 to 123 = 20mm)
-  // Col 4: Taxable Value (123 to 143 = 20mm)
-  // Col 5: CGST (143 to 161 = 18mm)
-  // Col 6: SGST (161 to 179 = 18mm)
-  // Col 7: Amount (179 to 196 = 17mm)
-  const colDividers = isService
-    ? (isIntraState
-        ? [14, 23, 75, 103, 123, 143, 161, 179, 196]
-        : [14, 23, 75, 103, 123, 143, 178, 196])
-    : (isIntraState
-        ? [14, 23, 69, 84, 99, 116, 143, 161, 179, 196]
-        : [14, 23, 69, 84, 99, 116, 143, 178, 196]);
+  // Drafts omit Taxable Value, CGST, SGST, and IGST columns and display Estimate Amt only
+  const colDividers = isDraftDoc
+    ? (isService
+        ? [14, 24, 94, 130, 162, 196]
+        : [14, 24, 94, 118, 142, 168, 196])
+    : isService
+      ? (isIntraState
+          ? [14, 23, 75, 103, 123, 143, 161, 179, 196]
+          : [14, 23, 75, 103, 123, 143, 178, 196])
+      : (isIntraState
+          ? [14, 23, 69, 84, 99, 116, 143, 161, 179, 196]
+          : [14, 23, 69, 84, 99, 116, 143, 178, 196]);
 
   // Vertical Grid Lines for Total Row (First columns merged for "Total")
-  const totalRowDividers = isService
-    ? (isIntraState
-        ? [14, 75, 103, 123, 143, 161, 179, 196]
-        : [14, 75, 103, 123, 143, 178, 196])
-    : (isIntraState
-        ? [14, 69, 84, 99, 116, 143, 161, 179, 196]
-        : [14, 69, 84, 99, 116, 143, 178, 196]);
+  const totalRowDividers = isDraftDoc
+    ? (isService
+        ? [14, 94, 130, 162, 196]
+        : [14, 94, 118, 142, 168, 196])
+    : isService
+      ? (isIntraState
+          ? [14, 75, 103, 123, 143, 161, 179, 196]
+          : [14, 75, 103, 123, 143, 178, 196])
+      : (isIntraState
+          ? [14, 69, 84, 99, 116, 143, 161, 179, 196]
+          : [14, 69, 84, 99, 116, 143, 178, 196]);
 
   // ─────────────────────────────────────────────────────────────────
   // DYNAMIC ROW HEIGHT & MULTI-PAGE CHUNKING PLANNER
@@ -336,7 +336,7 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
     const desc = (item.description || '').toUpperCase();
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
-    const textWidth = isService ? 48 : 42;
+    const textWidth = isDraftDoc ? 66 : (isService ? 48 : 42);
     const lines: string[] = doc.splitTextToSize(desc, textWidth);
     const numLines = Math.max(1, lines.length);
     if (numLines <= 1) return 8.2;
@@ -454,93 +454,166 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
 
-    // Col 0: Sr (14 to 23, center = 18.5)
+    // Col 0: Sr
     doc.setFontSize(7.5);
-    doc.text('Sr', 18.5, headerTopY + 5.0, { align: 'center' });
+    doc.text('Sr', isDraftDoc ? 19 : 18.5, headerTopY + 5.0, { align: 'center' });
 
-    if (isService) {
-      // Col 1: Service Description & SAC (23 to 75, left = 25)
-      doc.setFontSize(7.5);
-      doc.text('Service Description', 25, headerTopY + 3.2);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.5);
-      doc.text('SAC Code (9971 / 9988)', 25, headerTopY + 6.6);
+    if (isDraftDoc) {
+      if (isService) {
+        // Col 1: Service Description (24 to 94)
+        doc.setFontSize(7.5);
+        doc.text('Service Description', 26, headerTopY + 3.2);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.text('SAC Code (9971 / 9988)', 26, headerTopY + 6.6);
 
-      // Col 2: Principal Loan Amt (75 to 103, center = 89)
+        // Col 2: Principal Amt (94 to 130, center = 112)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text('Principal Amt', 112, headerTopY + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text('(Loan / Disbursed)', 112, headerTopY + 6.6, { align: 'center' });
+
+        // Col 3: Service Fee (130 to 162, center = 146)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text('Service Fee', 146, headerTopY + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text('(Facilitation)', 146, headerTopY + 6.6, { align: 'center' });
+      } else {
+        // Col 1: Product Name (24 to 94)
+        doc.setFontSize(7.5);
+        doc.text('Product Name', 26, headerTopY + 3.2);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.text('HSN / SAC Code', 26, headerTopY + 6.6);
+
+        // Col 2: Gross Wt (94 to 118, center = 106)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text('Gross Wt', 106, headerTopY + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text('(Gms)', 106, headerTopY + 6.6, { align: 'center' });
+
+        // Col 3: Net Wt (118 to 142, center = 130)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text('Net Wt', 130, headerTopY + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text('(Gms)', 130, headerTopY + 6.6, { align: 'center' });
+
+        // Col 4: Rate (142 to 168, center = 155)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text('Rate', 155, headerTopY + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text('(Per GMS)', 155, headerTopY + 6.6, { align: 'center' });
+      }
+
+      // Col Last: Estimate Amt (right-aligned at 193)
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.5);
-      doc.text('Principal Amt', 89, headerTopY + 3.2, { align: 'center' });
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6);
-      doc.text('(Loan / Disbursed)', 89, headerTopY + 6.6, { align: 'center' });
-
-      // Col 3: Service Fee (103 to 123, center = 113)
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
-      doc.text('Service Fee', 113, headerTopY + 3.2, { align: 'center' });
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6);
-      doc.text('(Facilitation)', 113, headerTopY + 6.6, { align: 'center' });
-
-      // Col 4: Taxable Value (123 to 143, center = 133)
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
-      doc.text('Taxable Value', 133, headerTopY + 5.0, { align: 'center' });
+      doc.text('Estimate Amt', 193, headerTopY + 5.0, { align: 'right' });
     } else {
-      // Goods / Dealer Purchase
-      // Col 1: Product Name / HSN Code (23 to 69)
-      doc.setFontSize(7.5);
-      doc.text('Product Name', 25, headerTopY + 3.2);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.5);
-      doc.text('HSN / SAC Code', 25, headerTopY + 6.6);
+      if (isService) {
+        // Col 1: Service Description & SAC (23 to 75, left = 25)
+        doc.setFontSize(7.5);
+        doc.text('Service Description', 25, headerTopY + 3.2);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.text('SAC Code (9971 / 9988)', 25, headerTopY + 6.6);
 
-      // Col 2: Gross Wt (69 to 84, center = 76.5)
+        // Col 2: Principal Loan Amt (75 to 103, center = 89)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text('Principal Amt', 89, headerTopY + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text('(Loan / Disbursed)', 89, headerTopY + 6.6, { align: 'center' });
+
+        // Col 3: Service Fee (103 to 123, center = 113)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text('Service Fee', 113, headerTopY + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text('(Facilitation)', 113, headerTopY + 6.6, { align: 'center' });
+
+        // Col 4: Taxable Value (123 to 143, center = 133)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text('Taxable Value', 133, headerTopY + 5.0, { align: 'center' });
+      } else {
+        // Goods / Dealer Purchase
+        // Col 1: Product Name / HSN Code (23 to 69)
+        doc.setFontSize(7.5);
+        doc.text('Product Name', 25, headerTopY + 3.2);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.text('HSN / SAC Code', 25, headerTopY + 6.6);
+
+        // Col 2: Gross Wt (69 to 84, center = 76.5)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text('Gross Wt', 76.5, headerTopY + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text('(Gms)', 76.5, headerTopY + 6.6, { align: 'center' });
+
+        // Col 3: Net Wt (84 to 99, center = 91.5)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text('Net Wt', 91.5, headerTopY + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text('(Gms)', 91.5, headerTopY + 6.6, { align: 'center' });
+
+        // Col 4: Rate (99 to 116, center = 107.5)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text('Rate', 107.5, headerTopY + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text('(Per GMS)', 107.5, headerTopY + 6.6, { align: 'center' });
+
+        // Col 5: Taxable Value (116 to 143, center = 129.5)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text('Taxable Value', 129.5, headerTopY + 5.0, { align: 'center' });
+      }
+
+      if (isIntraState) {
+        // Col 6: CGST (143 to 161, center = 152)
+        doc.text('CGST', 152, headerTopY + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text('Amt & Rate', 152, headerTopY + 6.6, { align: 'center' });
+
+        // Col 7: SGST (161 to 179, center = 170)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text('SGST', 170, headerTopY + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text('Amt & Rate', 170, headerTopY + 6.6, { align: 'center' });
+      } else {
+        // Col 6: IGST (143 to 178, center = 160.5)
+        doc.text('IGST', 160.5, headerTopY + 3.2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.text('Amt & Rate', 160.5, headerTopY + 6.6, { align: 'center' });
+      }
+
+      // Col Last: Amount (right-aligned at 193)
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.5);
-      doc.text('Gross Wt', 76.5, headerTopY + 5.0, { align: 'center' });
-
-      // Col 3: Net Wt. (84 to 99, center = 91.5)
-      doc.text('Net Wt.', 91.5, headerTopY + 5.0, { align: 'center' });
-
-      // Col 4: Rate (99 to 116, center = 107.5)
-      doc.text('Rate', 107.5, headerTopY + 3.2, { align: 'center' });
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6);
-      doc.text('Per GMS', 107.5, headerTopY + 6.6, { align: 'center' });
-
-      // Col 5: Taxable Value (116 to 143, center = 129.5)
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
-      doc.text('Taxable Value', 129.5, headerTopY + 5.0, { align: 'center' });
+      doc.text('Amount', 193, headerTopY + 5.0, { align: 'right' });
     }
-
-    if (isIntraState) {
-      // Col 6: CGST (143 to 161, center = 152)
-      doc.text('CGST', 152, headerTopY + 3.2, { align: 'center' });
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6);
-      doc.text('Amt & Rate', 152, headerTopY + 6.6, { align: 'center' });
-
-      // Col 7: SGST (161 to 179, center = 170)
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
-      doc.text('SGST', 170, headerTopY + 3.2, { align: 'center' });
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6);
-      doc.text('Amt & Rate', 170, headerTopY + 6.6, { align: 'center' });
-    } else {
-      // Col 6: IGST (143 to 178, center = 160.5)
-      doc.text('IGST', 160.5, headerTopY + 3.2, { align: 'center' });
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6);
-      doc.text('Amt & Rate', 160.5, headerTopY + 6.6, { align: 'center' });
-    }
-
-    // Col Last: Amount (right-aligned at 193)
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.text('Amount', 193, headerTopY + 5.0, { align: 'right' });
 
     // Header top border
     doc.setDrawColor(0, 0, 0);
@@ -566,23 +639,32 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       doc.setFontSize(7.5);
       doc.setTextColor(0, 0, 0);
       const desc = (item.description || '').toUpperCase();
-      const descLines: string[] = doc.splitTextToSize(desc, 42);
+      const textWidth = isDraftDoc ? 66 : (isService ? 48 : 42);
+      const descLeftX = isDraftDoc ? 26 : 25;
+      const descLines: string[] = doc.splitTextToSize(desc, textWidth);
       const numLines = Math.max(1, descLines.length);
 
       // Render Description lines sequentially with proper line-height
       const descStartY = numLines <= 1 ? rowY + 3.2 : rowY + 3.0;
       descLines.forEach((lineText, lIdx) => {
-        doc.text(lineText, 25, descStartY + (lIdx * 3.2));
+        doc.text(lineText, descLeftX, descStartY + (lIdx * 3.2));
       });
 
-      // Code line (HSN or SAC) rendered cleanly below all description lines
+      // Code line (HSN or SAC) + optional VA/MC rendered cleanly below all description lines
       const codeY = numLines <= 1 ? rowY + 6.6 : descStartY + (numLines * 3.2) + 0.4;
       const code = item.sacCode || item.hsnCode || (data.type === 'service' ? '9971' : '7113');
       const codeLabel = data.type === 'service' ? 'SAC Code' : 'HSN Code';
+      let subLabel = `${codeLabel} : ${code}`;
+      if (!isService && item.vaPercent && item.vaPercent > 0) {
+        subLabel += `  |  VA: ${item.vaPercent}%`;
+      }
+      if (data.type === 'sales' && item.makingChargesPaise && item.makingChargesPaise > 0) {
+        subLabel += `  |  MC: Rs.${Math.round(item.makingChargesPaise / 100).toLocaleString('en-IN')}`;
+      }
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6.5);
       doc.setTextColor(0, 0, 0);
-      doc.text(`${codeLabel} : ${code}`, 25, codeY);
+      doc.text(subLabel, descLeftX, codeY);
 
       // Vertically centered alignment for all other columns
       const midY = rowY + (thisRowHeight / 2) + 0.8;
@@ -591,62 +673,95 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
       doc.setTextColor(0, 0, 0);
-      doc.text(String(globalIdx), 18.5, midY, { align: 'center' });
+      doc.text(String(globalIdx), isDraftDoc ? 19 : 18.5, midY, { align: 'center' });
 
-      if (isService) {
-        // Col 2: Principal Loan Amt (75 to 103, right align at 101)
-        const principalText = item.principalAmountPaise && item.principalAmountPaise > 0
-          ? formatMoney(item.principalAmountPaise)
-          : '—';
-        doc.text(principalText, 101, midY, { align: 'right' });
+      if (isDraftDoc) {
+        if (isService) {
+          // Col 2: Principal Loan Amt (94 to 130, right align at 128)
+          const principalText = item.principalAmountPaise && item.principalAmountPaise > 0
+            ? formatMoney(item.principalAmountPaise)
+            : '—';
+          doc.text(principalText, 128, midY, { align: 'right' });
 
-        // Col 3: Service Fee (103 to 123, right align at 121)
-        const sFeePaise = item.serviceAmountPaise !== undefined && item.serviceAmountPaise > 0
-          ? item.serviceAmountPaise
-          : item.ratePaise;
-        doc.text(formatMoney(sFeePaise), 121, midY, { align: 'right' });
+          // Col 3: Service Fee (130 to 162, right align at 160)
+          const sFeePaise = item.serviceAmountPaise !== undefined && item.serviceAmountPaise > 0
+            ? item.serviceAmountPaise
+            : item.ratePaise;
+          doc.text(formatMoney(sFeePaise), 160, midY, { align: 'right' });
+        } else {
+          // Gross Wt (94 to 118, center = 106)
+          const grossVal = item.grossWeight ? item.grossWeight.toFixed(3) : (item.netWeight ? item.netWeight.toFixed(3) : '—');
+          doc.text(grossVal, 106, midY, { align: 'center' });
 
-        // Col 4: Taxable Value (123 to 143, right align at 141)
-        doc.text(formatMoney(item.taxableValuePaise), 141, midY, { align: 'right' });
-      } else {
-        // Gross Wt (69 to 84, center = 76.5)
-        const grossVal = item.grossWeight ? `${item.grossWeight.toFixed(3)} GMS` : (item.netWeight ? `${item.netWeight.toFixed(3)} GMS` : '—');
-        doc.text(grossVal, 76.5, midY, { align: 'center' });
+          // Net Wt (118 to 142, center = 130)
+          const netVal = item.netWeight ? item.netWeight.toFixed(3) : '—';
+          doc.text(netVal, 130, midY, { align: 'center' });
 
-        // Net Wt (84 to 99, center = 91.5)
-        const netVal = item.netWeight ? `${item.netWeight.toFixed(3)} GMS` : '—';
-        doc.text(netVal, 91.5, midY, { align: 'center' });
+          // Rate (142 to 168, right align at 166)
+          doc.text(formatMoney(item.ratePaise), 166, midY, { align: 'right' });
+        }
 
-        // Rate (99 to 116, right align at 114)
-        doc.text(formatMoney(item.ratePaise), 114, midY, { align: 'right' });
-
-        // Taxable Value (116 to 143, right align at 141)
-        doc.text(formatMoney(item.taxableValuePaise), 141, midY, { align: 'right' });
-      }
-
-      // Taxes (Split vertically around midY)
-      if (isIntraState) {
-        const halfRate = (item.gstRate / 2).toFixed(2);
-        doc.text(formatMoney(item.cgstAmountPaise), 159, midY - 1.6, { align: 'right' });
-        doc.setFontSize(6.2);
-        doc.text(`(${halfRate}%)`, 159, midY + 2.0, { align: 'right' });
-
+        // Estimate Amount (168/162 to 196, right align at 193) - NO GST added
+        doc.setFont('helvetica', 'bold');
         doc.setFontSize(7.5);
-        doc.text(formatMoney(item.sgstAmountPaise), 177, midY - 1.6, { align: 'right' });
-        doc.setFontSize(6.2);
-        doc.text(`(${halfRate}%)`, 177, midY + 2.0, { align: 'right' });
+        doc.setTextColor(0, 0, 0);
+        doc.text(formatMoney(item.taxableValuePaise), 193, midY, { align: 'right' });
       } else {
-        doc.text(formatMoney(item.igstAmountPaise), 176, midY - 1.6, { align: 'right' });
-        doc.setFontSize(6.2);
-        doc.text(`(${item.gstRate.toFixed(2)}%)`, 176, midY + 2.0, { align: 'right' });
-      }
+        if (isService) {
+          // Col 2: Principal Loan Amt (75 to 103, right align at 101)
+          const principalText = item.principalAmountPaise && item.principalAmountPaise > 0
+            ? formatMoney(item.principalAmountPaise)
+            : '—';
+          doc.text(principalText, 101, midY, { align: 'right' });
 
-      // Line Amount (Taxable + GST)
-      const lineAmountPaise = Math.round(item.taxableValuePaise + item.cgstAmountPaise + item.sgstAmountPaise + item.igstAmountPaise);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.5);
-      doc.setTextColor(0, 0, 0);
-      doc.text(formatMoney(lineAmountPaise), 193, midY, { align: 'right' });
+          // Col 3: Service Fee (103 to 123, right align at 121)
+          const sFeePaise = item.serviceAmountPaise !== undefined && item.serviceAmountPaise > 0
+            ? item.serviceAmountPaise
+            : item.ratePaise;
+          doc.text(formatMoney(sFeePaise), 121, midY, { align: 'right' });
+
+          // Col 4: Taxable Value (123 to 143, right align at 141)
+          doc.text(formatMoney(item.taxableValuePaise), 141, midY, { align: 'right' });
+        } else {
+          // Gross Wt (69 to 84, center = 76.5)
+          const grossVal = item.grossWeight ? item.grossWeight.toFixed(3) : (item.netWeight ? item.netWeight.toFixed(3) : '—');
+          doc.text(grossVal, 76.5, midY, { align: 'center' });
+
+          // Net Wt (84 to 99, center = 91.5)
+          const netVal = item.netWeight ? item.netWeight.toFixed(3) : '—';
+          doc.text(netVal, 91.5, midY, { align: 'center' });
+
+          // Rate (99 to 116, right align at 114)
+          doc.text(formatMoney(item.ratePaise), 114, midY, { align: 'right' });
+
+          // Taxable Value (116 to 143, right align at 141)
+          doc.text(formatMoney(item.taxableValuePaise), 141, midY, { align: 'right' });
+        }
+
+        // Taxes (Split vertically around midY)
+        if (isIntraState) {
+          const halfRate = (item.gstRate / 2).toFixed(2);
+          doc.text(formatMoney(item.cgstAmountPaise), 159, midY - 1.6, { align: 'right' });
+          doc.setFontSize(6.2);
+          doc.text(`(${halfRate}%)`, 159, midY + 2.0, { align: 'right' });
+
+          doc.setFontSize(7.5);
+          doc.text(formatMoney(item.sgstAmountPaise), 177, midY - 1.6, { align: 'right' });
+          doc.setFontSize(6.2);
+          doc.text(`(${halfRate}%)`, 177, midY + 2.0, { align: 'right' });
+        } else {
+          doc.text(formatMoney(item.igstAmountPaise), 176, midY - 1.6, { align: 'right' });
+          doc.setFontSize(6.2);
+          doc.text(`(${item.gstRate.toFixed(2)}%)`, 176, midY + 2.0, { align: 'right' });
+        }
+
+        // Line Amount (Taxable + GST)
+        const lineAmountPaise = Math.round(item.taxableValuePaise + item.cgstAmountPaise + item.sgstAmountPaise + item.igstAmountPaise);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(0, 0, 0);
+        doc.text(formatMoney(lineAmountPaise), 193, midY, { align: 'right' });
+      }
 
       rowY += thisRowHeight;
 
@@ -697,25 +812,20 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(0, 0, 0);
 
-      let pY = billBoxY + 12.2;
+      let pY = billBoxY + 12.6;
       doc.setFontSize(7.8);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(0, 0, 0);
 
       if (data.partyAddress && data.partyAddress.trim()) {
-        const addrLines: string[] = doc.splitTextToSize(data.partyAddress.trim(), 90);
+        const addrLines: string[] = doc.splitTextToSize(data.partyAddress.trim(), 95);
         for (const al of addrLines.slice(0, 2)) {
           doc.text(al, margin + 4, pY);
-          pY += 3.1;
+          pY += 3.2;
         }
       }
 
-      if (data.placeOfSupply && data.placeOfSupply.trim() && !data.partyAddress) {
-        doc.text(data.placeOfSupply.trim().toUpperCase(), margin + 4, pY);
-        pY += 3.1;
-      }
-
-      // Customer / Party Mobile & GSTIN
+      // Customer / Party Mobile & GSTIN (No repeated Karnataka on left)
       const contactBits: string[] = [];
       const partyMobileStr = data.partyMobile ? String(data.partyMobile).trim() : '';
       const partyGstinStr = data.partyGstin ? String(data.partyGstin).trim() : '';
@@ -728,7 +838,7 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       if (contactBits.length > 0) {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(7.5);
-        doc.text(contactBits.join('   |   '), margin + 4, pY);
+        doc.text(contactBits.join('   |   '), margin + 4, pY + 0.3);
       }
 
       // Right: Place of Supply & Badge
@@ -753,7 +863,9 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       doc.setFontSize(7);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
-      const supplyBadge = isIntra ? 'INTRASTATE (CGST + SGST)' : 'INTERSTATE (IGST)';
+      const supplyBadge = isDraftDoc
+        ? 'ESTIMATE / NON-STATUTORY'
+        : (isIntra ? 'INTRASTATE (CGST + SGST)' : 'INTERSTATE (IGST)');
       doc.text(supplyBadge, posRightX - 24, billBoxY + 16.2, { align: 'center' });
 
       tableTopY = billBoxY + billBoxHeight + 4;
@@ -835,42 +947,66 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       doc.setTextColor(0, 0, 0);
       doc.text('Total', 18, totalRowTop + 5.0);
 
-      if (isService) {
-        // Total Principal Amt (75 to 103, right align at 101)
-        doc.setFontSize(7);
-        doc.text(totalPrincipalPaise > 0 ? formatMoney(totalPrincipalPaise) : '—', 101, totalRowTop + 5.0, { align: 'right' });
+      if (isDraftDoc) {
+        if (isService) {
+          // Total Principal Amt (94 to 130, right align at 128)
+          doc.setFontSize(7);
+          doc.text(totalPrincipalPaise > 0 ? formatMoney(totalPrincipalPaise) : '—', 128, totalRowTop + 5.0, { align: 'right' });
 
-        // Total Service Fee (103 to 123, right align at 121)
-        doc.text(totalServiceFeePaise > 0 ? formatMoney(totalServiceFeePaise) : '—', 121, totalRowTop + 5.0, { align: 'right' });
+          // Total Service Fee (130 to 162, right align at 160)
+          doc.text(totalServiceFeePaise > 0 ? formatMoney(totalServiceFeePaise) : '—', 160, totalRowTop + 5.0, { align: 'right' });
+        } else {
+          // Total Gross Wt (94 to 118, center = 106)
+          doc.setFontSize(7);
+          doc.text(totalGrossWeight > 0 ? totalGrossWeight.toFixed(3) : '—', 106, totalRowTop + 5.0, { align: 'center' });
 
-        // Total Taxable Value (123 to 143, right align at 141)
+          // Total Net Wt (118 to 142, center = 130)
+          doc.text(totalNetWeight > 0 ? totalNetWeight.toFixed(3) : '—', 130, totalRowTop + 5.0, { align: 'center' });
+
+          // Total Rate (142 to 168)
+          doc.text('—', 155, totalRowTop + 5.0, { align: 'center' });
+        }
+
         doc.setFontSize(7.5);
-        doc.text(formatMoney(data.taxableAmountPaise), 141, totalRowTop + 5.0, { align: 'right' });
+        doc.text(formatMoney(data.taxableAmountPaise), 193, totalRowTop + 5.0, { align: 'right' });
       } else {
-        // Total Gross Wt (69 to 84, center = 76.5)
-        doc.setFontSize(7);
-        doc.text(totalGrossWeight > 0 ? `${totalGrossWeight.toFixed(3)} GMS` : '—', 76.5, totalRowTop + 5.0, { align: 'center' });
+        if (isService) {
+          // Total Principal Amt (75 to 103, right align at 101)
+          doc.setFontSize(7);
+          doc.text(totalPrincipalPaise > 0 ? formatMoney(totalPrincipalPaise) : '—', 101, totalRowTop + 5.0, { align: 'right' });
 
-        // Total Net Wt (84 to 99, center = 91.5)
-        doc.text(totalNetWeight > 0 ? `${totalNetWeight.toFixed(3)} GMS` : '—', 91.5, totalRowTop + 5.0, { align: 'center' });
+          // Total Service Fee (103 to 123, right align at 121)
+          doc.text(totalServiceFeePaise > 0 ? formatMoney(totalServiceFeePaise) : '—', 121, totalRowTop + 5.0, { align: 'right' });
 
-        // Total Rate (99 to 116)
-        doc.text('—', 107.5, totalRowTop + 5.0, { align: 'center' });
+          // Total Taxable Value (123 to 143, right align at 141)
+          doc.setFontSize(7.5);
+          doc.text(formatMoney(data.taxableAmountPaise), 141, totalRowTop + 5.0, { align: 'right' });
+        } else {
+          // Total Gross Wt (69 to 84, center = 76.5)
+          doc.setFontSize(7);
+          doc.text(totalGrossWeight > 0 ? totalGrossWeight.toFixed(3) : '—', 76.5, totalRowTop + 5.0, { align: 'center' });
 
-        // Total Taxable Value (116 to 143, right align at 141)
-        doc.setFontSize(7.5);
-        doc.text(formatMoney(data.taxableAmountPaise), 141, totalRowTop + 5.0, { align: 'right' });
+          // Total Net Wt (84 to 99, center = 91.5)
+          doc.text(totalNetWeight > 0 ? totalNetWeight.toFixed(3) : '—', 91.5, totalRowTop + 5.0, { align: 'center' });
+
+          // Total Rate (99 to 116)
+          doc.text('—', 107.5, totalRowTop + 5.0, { align: 'center' });
+
+          // Total Taxable Value (116 to 143, right align at 141)
+          doc.setFontSize(7.5);
+          doc.text(formatMoney(data.taxableAmountPaise), 141, totalRowTop + 5.0, { align: 'right' });
+        }
+
+        if (isIntraState) {
+          doc.text(formatMoney(data.cgstAmountPaise), 159, totalRowTop + 5.0, { align: 'right' });
+          doc.text(formatMoney(data.sgstAmountPaise), 177, totalRowTop + 5.0, { align: 'right' });
+        } else {
+          doc.text(formatMoney(data.igstAmountPaise), 176, totalRowTop + 5.0, { align: 'right' });
+        }
+
+        const itemsTotalPaise = Math.round(data.taxableAmountPaise + data.cgstAmountPaise + data.sgstAmountPaise + data.igstAmountPaise);
+        doc.text(formatMoney(itemsTotalPaise), 193, totalRowTop + 5.0, { align: 'right' });
       }
-
-      if (isIntraState) {
-        doc.text(formatMoney(data.cgstAmountPaise), 159, totalRowTop + 5.0, { align: 'right' });
-        doc.text(formatMoney(data.sgstAmountPaise), 177, totalRowTop + 5.0, { align: 'right' });
-      } else {
-        doc.text(formatMoney(data.igstAmountPaise), 176, totalRowTop + 5.0, { align: 'right' });
-      }
-
-      const itemsTotalPaise = Math.round(data.taxableAmountPaise + data.cgstAmountPaise + data.sgstAmountPaise + data.igstAmountPaise);
-      doc.text(formatMoney(itemsTotalPaise), 193, totalRowTop + 5.0, { align: 'right' });
 
       // Horizontal Lines for Table Frame
       doc.setDrawColor(0, 0, 0);
@@ -890,16 +1026,23 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
 
       let curFooterY = totalRowBottom + 2.5;
 
+      const effectiveGrandTotalPaise = isDraftDoc
+        ? Math.round((data.taxableAmountPaise || 0) / 100) * 100
+        : data.grandTotalPaise;
+      const effectiveRoundOffPaise = isDraftDoc
+        ? effectiveGrandTotalPaise - (data.taxableAmountPaise || 0)
+        : (data.roundOffPaise || 0);
+
       // ─────────────────────────────────────────────────────────────
       // ROUNDING OFF ROW (RIGHT-ALIGNED UNDER TOTAL ROW)
       // ─────────────────────────────────────────────────────────────
-      if (data.roundOffPaise && data.roundOffPaise !== 0) {
+      if (effectiveRoundOffPaise && effectiveRoundOffPaise !== 0) {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(7.5);
         doc.setTextColor(0, 0, 0);
         doc.text('ROUNDING OFF', 176, curFooterY + 3.2, { align: 'right' });
-        const roSign = data.roundOffPaise < 0 ? '-' : '+';
-        const roVal = (Math.abs(data.roundOffPaise) / 100).toFixed(2);
+        const roSign = effectiveRoundOffPaise < 0 ? '-' : '+';
+        const roVal = (Math.abs(effectiveRoundOffPaise) / 100).toFixed(2);
         doc.text(`${roSign} ${roVal}`, 193, curFooterY + 3.2, { align: 'right' });
         curFooterY += 4.8;
       }
@@ -915,7 +1058,7 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       doc.setTextColor(0, 0, 0);
       doc.text('AMOUNT IN WORDS', margin, totalsSectionY + 3);
 
-      const words = numberToWordsIndian(data.grandTotalPaise / 100);
+      const words = numberToWordsIndian(effectiveGrandTotalPaise / 100);
       try {
         doc.addImage(RUPEE_SYMBOL_BASE64, 'PNG', margin, totalsSectionY + 5.2, 2.8, 3.4);
       } catch {}
@@ -925,7 +1068,7 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       const cleanWords = words.endsWith('Only') ? words : `${words} Only`;
       doc.text(cleanWords, margin + 4.5, totalsSectionY + 8, { maxWidth: 90 });
 
-      // Right: Boxed Table for Total Invoice Value & Total Amount Payable (All Black, flush right at 196mm)
+      // Right: Boxed Table for Total Invoice/Estimate Value & Total Amount Payable (All Black, flush right at 196mm)
       const boxW = 82;
       const boxX = pageWidth - margin - boxW; // 196 - 82 = 114
       const boxH = 14;
@@ -939,13 +1082,13 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       // Divider between the two rows
       doc.line(boxX, totalsSectionY + 7, boxX + boxW, totalsSectionY + 7);
 
-      const grandTotalFormatted = formatMoney(data.grandTotalPaise);
+      const grandTotalFormatted = formatMoney(effectiveGrandTotalPaise);
 
-      // Row 1: Total Invoice Value
+      // Row 1: Total Invoice / Estimate Value
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
       doc.setTextColor(0, 0, 0);
-      doc.text('Total Invoice Value', boxX + 4, totalsSectionY + 4.8);
+      doc.text(isDraftDoc ? 'Total Estimate Value' : 'Total Invoice Value', boxX + 4, totalsSectionY + 4.8);
       doc.setFontSize(9);
       const valWidth1 = doc.getTextWidth(grandTotalFormatted);
       try {
@@ -953,11 +1096,11 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       } catch {}
       doc.text(grandTotalFormatted, boxX + boxW - 3, totalsSectionY + 4.8, { align: 'right' });
 
-      // Row 2: Total Amount Payable
+      // Row 2: Estimated Amount / Total Amount Payable
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8.5);
       doc.setTextColor(0, 0, 0);
-      doc.text('Total Amount Payable', boxX + 4, totalsSectionY + 11.5);
+      doc.text(isDraftDoc ? 'Estimated Amount' : 'Total Amount Payable', boxX + 4, totalsSectionY + 11.5);
       doc.setFontSize(10);
       const valWidth2 = doc.getTextWidth(grandTotalFormatted);
       try {
@@ -1108,6 +1251,13 @@ export function formatRecordToPdfData(
     return isNaN(n) ? fallback : Math.round(n);
   };
 
+  const isDraftDoc = Boolean(
+    doc.is_draft ||
+    doc.isDraft ||
+    doc.status === 'draft' ||
+    (docNumber && (docNumber.startsWith('DRAFT') || docNumber.startsWith('EST')))
+  );
+
   const items = (doc.items || []).map((item: any) => {
     const qty = Math.max(1, Number(item.quantity) || 1);
     const ratePaise = parsePaise(item.ratePaise ?? item.rate);
@@ -1136,17 +1286,22 @@ export function formatRecordToPdfData(
       item.taxableValuePaise ?? item.taxable_value ?? item.taxable_amount,
       Math.max(0, baseFallback + makingChargesPaise - discountPaise)
     );
-    const cgstAmountPaise = parsePaise(item.cgstAmountPaise ?? item.cgst_amount);
-    const sgstAmountPaise = parsePaise(item.sgstAmountPaise ?? item.sgst_amount);
-    const igstAmountPaise = parsePaise(item.igstAmountPaise ?? item.igst_amount);
-    const totalValuePaise = parsePaise(
-      item.totalValuePaise ?? item.total_value ?? item.total_amount,
-      taxableValuePaise + cgstAmountPaise + sgstAmountPaise + igstAmountPaise
-    );
-    const gstRate =
-      Number(item.gstRate ?? item.gst_rate) ||
-      Number(item.cgst_rate || 0) + Number(item.sgst_rate || 0) + Number(item.igst_rate || 0) ||
-      (isService ? 18 : 3);
+    const cgstAmountPaise = isDraftDoc ? 0 : parsePaise(item.cgstAmountPaise ?? item.cgst_amount);
+    const sgstAmountPaise = isDraftDoc ? 0 : parsePaise(item.sgstAmountPaise ?? item.sgst_amount);
+    const igstAmountPaise = isDraftDoc ? 0 : parsePaise(item.igstAmountPaise ?? item.igst_amount);
+    const totalValuePaise = isDraftDoc
+      ? taxableValuePaise
+      : parsePaise(
+          item.totalValuePaise ?? item.total_value ?? item.total_amount,
+          taxableValuePaise + cgstAmountPaise + sgstAmountPaise + igstAmountPaise
+        );
+    const gstRate = isDraftDoc
+      ? 0
+      : (
+          Number(item.gstRate ?? item.gst_rate) ||
+          Number(item.cgst_rate || 0) + Number(item.sgst_rate || 0) + Number(item.igst_rate || 0) ||
+          (isService ? 18 : 3)
+        );
 
     return {
       description: item.description || (isService ? 'Financial Service / Loan Takeover' : 'Gold Jewellery Article'),
@@ -1171,15 +1326,19 @@ export function formatRecordToPdfData(
     };
   });
 
-  const grandTotalPaise = parsePaise(doc.grandTotalPaise ?? doc.grand_total ?? doc.final_amount ?? doc.total_amount);
   const taxableAmountPaise = parsePaise(doc.taxableAmountPaise ?? doc.taxable_amount ?? doc.taxable_value);
   const totalDiscountPaise = parsePaise(doc.totalDiscountPaise ?? doc.discount_amount ?? doc.discount);
   const totalMakingChargesPaise = parsePaise(doc.totalMakingChargesPaise ?? doc.making_charges);
   const subtotalPaise = parsePaise(doc.subtotalPaise ?? doc.subtotal, taxableAmountPaise + totalDiscountPaise);
-  const cgstAmountPaise = parsePaise(doc.cgstAmountPaise ?? doc.cgst_amount);
-  const sgstAmountPaise = parsePaise(doc.sgstAmountPaise ?? doc.sgst_amount);
-  const igstAmountPaise = parsePaise(doc.igstAmountPaise ?? doc.igst_amount);
-  const roundOffPaise = parsePaise(doc.roundOffPaise ?? doc.round_off);
+  const cgstAmountPaise = isDraftDoc ? 0 : parsePaise(doc.cgstAmountPaise ?? doc.cgst_amount);
+  const sgstAmountPaise = isDraftDoc ? 0 : parsePaise(doc.sgstAmountPaise ?? doc.sgst_amount);
+  const igstAmountPaise = isDraftDoc ? 0 : parsePaise(doc.igstAmountPaise ?? doc.igst_amount);
+  const grandTotalPaise = isDraftDoc
+    ? Math.round(taxableAmountPaise / 100) * 100
+    : parsePaise(doc.grandTotalPaise ?? doc.grand_total ?? doc.final_amount ?? doc.total_amount);
+  const roundOffPaise = isDraftDoc
+    ? grandTotalPaise - taxableAmountPaise
+    : parsePaise(doc.roundOffPaise ?? doc.round_off);
   const amountReceivedPaise = parsePaise(doc.amountReceivedPaise ?? doc.amount_received ?? doc.amount_paid);
   const balanceDuePaise = parsePaise(doc.balanceDuePaise ?? doc.balance_due, Math.max(0, grandTotalPaise - amountReceivedPaise));
 
@@ -1197,7 +1356,7 @@ export function formatRecordToPdfData(
     partyAddress,
     originalInvoiceNumber: doc.original_invoice_number,
     originalInvoiceDate: doc.original_invoice_date,
-    isDraft: Boolean(doc.is_draft || doc.isDraft || doc.status === 'draft' || (docNumber && docNumber.startsWith('DRAFT'))),
+    isDraft: isDraftDoc,
     items,
     subtotalPaise,
     totalDiscountPaise,

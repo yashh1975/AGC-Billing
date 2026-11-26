@@ -93,6 +93,8 @@ export function LiveInvoicePreview({
   const companyEmail = (company.email || 'anjaneyagoldcompany@gmail.com').toLowerCase();
   const companyPhone = company.phone || '9008477669';
 
+  const isDraftDoc = Boolean(isDraft || documentNumber?.startsWith('DRAFT') || documentNumber?.startsWith('EST'));
+
   // Determine supply type
   const isIntraState = useMemo(() => {
     const pos = (placeOfSupply || '').trim().toLowerCase();
@@ -117,7 +119,7 @@ export function LiveInvoicePreview({
       const rate = item.rate || 0;
       const making = item.makingCharges || 0;
       const disc = item.discount || 0;
-      const gstPct = item.gstRate || (type === 'service' ? 18 : 3);
+      const gstPct = isDraftDoc ? 0 : (item.gstRate !== undefined && item.gstRate !== null ? item.gstRate : (type === 'service' ? 18 : 3));
       const gw = item.grossWeight || item.netWeight || 0;
       const nw = item.netWeight || 0;
       const principal = item.principalAmount || 0;
@@ -153,12 +155,14 @@ export function LiveInvoicePreview({
       let sgst = 0;
       let igst = 0;
 
-      if (isIntraState) {
-        const halfRate = gstPct / 2;
-        cgst = (taxable * halfRate) / 100;
-        sgst = (taxable * halfRate) / 100;
-      } else {
-        igst = (taxable * gstPct) / 100;
+      if (!isDraftDoc && gstPct > 0) {
+        if (isIntraState) {
+          const halfRate = gstPct / 2;
+          cgst = (taxable * halfRate) / 100;
+          sgst = (taxable * halfRate) / 100;
+        } else {
+          igst = (taxable * gstPct) / 100;
+        }
       }
 
       const totalVal = taxable + cgst + sgst + igst;
@@ -203,7 +207,7 @@ export function LiveInvoicePreview({
       roundOff,
       grandTotal: roundedTotal,
     };
-  }, [items, isIntraState, type]);
+  }, [items, isIntraState, type, isDraftDoc]);
 
   // Format date display (e.g. "17 NOV 2026")
   const formattedDate = useMemo(() => {
@@ -219,8 +223,6 @@ export function LiveInvoicePreview({
       return invoiceDate;
     }
   }, [invoiceDate]);
-
-  const isDraftDoc = Boolean(isDraft || documentNumber?.startsWith('DRAFT') || documentNumber?.startsWith('EST'));
 
   const documentTitle = isDraftDoc
     ? type === 'purchase'
@@ -326,76 +328,84 @@ export function LiveInvoicePreview({
     <table className="mt-5 w-full table-fixed text-left text-xs border border-black border-collapse bg-white">
       <thead>
         <tr className="border-b border-black bg-white text-black font-extrabold uppercase text-[11px]">
-          <th style={{ width: '5%' }} className="py-2 px-1 text-center border-r border-black">Sr</th>
+          <th style={{ width: isDraftDoc ? '6%' : '5%' }} className="py-2 px-1 text-center border-r border-black">Sr</th>
           {type === 'service' ? (
             <>
-              <th style={{ width: isIntraState ? '25%' : '27%' }} className="py-2 px-2 border-r border-black text-left">
+              <th style={{ width: isDraftDoc ? '38%' : (isIntraState ? '25%' : '27%') }} className="py-2 px-2 border-r border-black text-left">
                 <div>Service Description</div>
                 <div className="text-[9px] font-normal text-black normal-case">SAC Code (9971 / 9988)</div>
               </th>
-              <th style={{ width: isIntraState ? '14%' : '15%' }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+              <th style={{ width: isDraftDoc ? '20%' : (isIntraState ? '14%' : '15%') }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
                 <div>Principal Amt</div>
                 <div className="text-[9px] font-normal text-black normal-case">(Loan / Disbursed)</div>
               </th>
-              <th style={{ width: isIntraState ? '12%' : '13%' }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+              <th style={{ width: isDraftDoc ? '18%' : (isIntraState ? '12%' : '13%') }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
                 <div>Service Fee</div>
                 <div className="text-[9px] font-normal text-black normal-case">(Facilitation)</div>
               </th>
-              <th style={{ width: isIntraState ? '14%' : '15%' }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
-                <div>Taxable Value</div>
-                <div className="text-[9px] font-normal text-black normal-case">(₹)</div>
-              </th>
+              {!isDraftDoc && (
+                <th style={{ width: isIntraState ? '14%' : '15%' }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+                  <div>Taxable Value</div>
+                  <div className="text-[9px] font-normal text-black normal-case">(₹)</div>
+                </th>
+              )}
             </>
           ) : (
             <>
-              <th style={{ width: isIntraState ? '23%' : '25%' }} className="py-2 px-2 border-r border-black text-left">
+              <th style={{ width: isDraftDoc ? '38%' : (isIntraState ? '23%' : '25%') }} className="py-2 px-2 border-r border-black text-left">
                 <div>Product Name</div>
                 <div className="text-[9px] font-normal text-black normal-case">
                   HSN / SAC Code
                 </div>
               </th>
-              <th style={{ width: isIntraState ? '9%' : '10%' }} className="py-2 px-1 text-center border-r border-black whitespace-nowrap">
+              <th style={{ width: isDraftDoc ? '13%' : (isIntraState ? '9%' : '10%') }} className="py-2 px-1 text-center border-r border-black whitespace-nowrap">
                 <div>Gross Wt</div>
                 <div className="text-[9px] font-normal text-black normal-case">(Gms)</div>
               </th>
-              <th style={{ width: isIntraState ? '9%' : '10%' }} className="py-2 px-1 text-center border-r border-black whitespace-nowrap">
+              <th style={{ width: isDraftDoc ? '13%' : (isIntraState ? '9%' : '10%') }} className="py-2 px-1 text-center border-r border-black whitespace-nowrap">
                 <div>Net Wt</div>
                 <div className="text-[9px] font-normal text-black normal-case">(Gms)</div>
               </th>
-              <th style={{ width: isIntraState ? '11%' : '12%' }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+              <th style={{ width: isDraftDoc ? '14%' : (isIntraState ? '11%' : '12%') }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
                 <div>Rate</div>
                 <div className="text-[9px] font-normal text-black normal-case">(₹/g)</div>
               </th>
-              <th style={{ width: isIntraState ? '13%' : '14%' }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
-                <div>Taxable Value</div>
-                <div className="text-[9px] font-normal text-black normal-case">(₹)</div>
-              </th>
+              {!isDraftDoc && (
+                <th style={{ width: isIntraState ? '13%' : '14%' }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+                  <div>Taxable Value</div>
+                  <div className="text-[9px] font-normal text-black normal-case">(₹)</div>
+                </th>
+              )}
             </>
           )}
-          {isIntraState ? (
-            <>
-              <th style={{ width: '10%' }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
-                <div>CGST</div>
+          {!isDraftDoc && (
+            isIntraState ? (
+              <>
+                <th style={{ width: '10%' }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+                  <div>CGST</div>
+                  <div className="text-[9px] font-normal text-black normal-case">Amt & Rate</div>
+                </th>
+                <th style={{ width: '10%' }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+                  <div>SGST</div>
+                  <div className="text-[9px] font-normal text-black normal-case">Amt & Rate</div>
+                </th>
+              </>
+            ) : (
+              <th style={{ width: '12%' }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
+                <div>IGST</div>
                 <div className="text-[9px] font-normal text-black normal-case">Amt & Rate</div>
               </th>
-              <th style={{ width: '10%' }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
-                <div>SGST</div>
-                <div className="text-[9px] font-normal text-black normal-case">Amt & Rate</div>
-              </th>
-            </>
-          ) : (
-            <th style={{ width: '12%' }} className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap">
-              <div>IGST</div>
-              <div className="text-[9px] font-normal text-black normal-case">Amt & Rate</div>
-            </th>
+            )
           )}
-          <th style={{ width: isIntraState ? '10%' : (type === 'service' ? '13%' : '12%') }} className="py-2 pr-2 pl-1 text-right whitespace-nowrap">Amount</th>
+          <th style={{ width: isDraftDoc ? (type === 'service' ? '18%' : '16%') : (isIntraState ? '10%' : (type === 'service' ? '13%' : '12%')) }} className="py-2 pr-2 pl-1 text-right whitespace-nowrap">
+            {isDraftDoc ? 'Estimate Amt' : 'Amount'}
+          </th>
         </tr>
       </thead>
       <tbody className="divide-y divide-black">
         {pageItems.length === 0 ? (
           <tr>
-            <td colSpan={isIntraState ? (type === 'service' ? 8 : 9) : (type === 'service' ? 7 : 8)} className="py-8 text-center text-black italic">
+            <td colSpan={isDraftDoc ? (type === 'service' ? 5 : 6) : (isIntraState ? (type === 'service' ? 8 : 9) : (type === 'service' ? 7 : 8))} className="py-8 text-center text-black italic">
               No items added yet. Add items in the form to see live calculation.
             </td>
           </tr>
@@ -411,6 +421,8 @@ export function LiveInvoicePreview({
                 </span>
                 <span className="text-[10px] text-black font-mono block mt-0.5">
                   {type === 'service' ? 'SAC Code' : 'HSN Code'} : {item.sacCode || item.hsnCode || (type === 'service' ? '9971' : '7113')}
+                  {type !== 'service' && item.vaPercent && item.vaPercent > 0 ? `  |  VA: ${item.vaPercent}%` : ''}
+                  {type === 'sales' && item.makingCharges && item.makingCharges > 0 ? `  |  MC: ₹${item.makingCharges.toLocaleString('en-IN')}` : ''}
                 </span>
               </td>
               {type === 'service' ? (
@@ -421,9 +433,11 @@ export function LiveInvoicePreview({
                   <td className="py-2 pr-2 pl-1 text-right font-medium border-r border-black whitespace-nowrap text-black overflow-hidden">
                     ₹{(item.serviceAmount || item.rate || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
-                  <td className="py-2 pr-2 pl-1 text-right font-bold border-r border-black whitespace-nowrap text-black overflow-hidden">
-                    ₹{(item.taxable || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
+                  {!isDraftDoc && (
+                    <td className="py-2 pr-2 pl-1 text-right font-bold border-r border-black whitespace-nowrap text-black overflow-hidden">
+                      ₹{(item.taxable || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  )}
                 </>
               ) : (
                 <>
@@ -436,30 +450,34 @@ export function LiveInvoicePreview({
                   <td className="py-2 pr-2 pl-1 text-right font-medium border-r border-black whitespace-nowrap text-black overflow-hidden">
                     ₹{(item.rate || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
-                  <td className="py-2 pr-2 pl-1 text-right font-bold border-r border-black whitespace-nowrap text-black overflow-hidden">
-                    ₹{(item.taxable || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
+                  {!isDraftDoc && (
+                    <td className="py-2 pr-2 pl-1 text-right font-bold border-r border-black whitespace-nowrap text-black overflow-hidden">
+                      ₹{(item.taxable || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  )}
                 </>
               )}
-              {isIntraState ? (
-                <>
+              {!isDraftDoc && (
+                isIntraState ? (
+                  <>
+                    <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap text-black overflow-hidden">
+                      <span className="font-bold block">₹{(item.cgst || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span className="text-[9.5px] text-black block">({(item.gstRate / 2).toFixed(2)}%)</span>
+                    </td>
+                    <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap text-black overflow-hidden">
+                      <span className="font-bold block">₹{(item.sgst || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span className="text-[9.5px] text-black block">({(item.gstRate / 2).toFixed(2)}%)</span>
+                    </td>
+                  </>
+                ) : (
                   <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap text-black overflow-hidden">
-                    <span className="font-bold block">₹{(item.cgst || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    <span className="text-[9.5px] text-black block">({(item.gstRate / 2).toFixed(2)}%)</span>
+                    <span className="font-bold block">₹{(item.igst || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="text-[9.5px] text-black block">({item.gstRate.toFixed(2)}%)</span>
                   </td>
-                  <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap text-black overflow-hidden">
-                    <span className="font-bold block">₹{(item.sgst || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    <span className="text-[9.5px] text-black block">({(item.gstRate / 2).toFixed(2)}%)</span>
-                  </td>
-                </>
-              ) : (
-                <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap text-black overflow-hidden">
-                  <span className="font-bold block">₹{(item.igst || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  <span className="text-[9.5px] text-black block">({item.gstRate.toFixed(2)}%)</span>
-                </td>
+                )
               )}
               <td className="py-2 pr-2 pl-1 text-right font-extrabold text-black whitespace-nowrap overflow-hidden">
-                ₹{(item.totalVal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₹{(isDraftDoc ? (item.taxable || 0) : (item.totalVal || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </td>
             </tr>
           ))
@@ -479,9 +497,11 @@ export function LiveInvoicePreview({
                 <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap overflow-hidden">
                   {summary.totalServiceFee > 0 ? `₹${summary.totalServiceFee.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
                 </td>
-                <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap overflow-hidden">
-                  ₹{summary.totalTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
+                {!isDraftDoc && (
+                  <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap overflow-hidden">
+                    ₹{summary.totalTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                )}
               </>
             ) : (
               <>
@@ -492,24 +512,28 @@ export function LiveInvoicePreview({
                   {summary.totalNetWeight > 0 ? summary.totalNetWeight.toFixed(3) : '—'}
                 </td>
                 <td className="py-2 px-1 border-r border-black text-center">—</td>
-                <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap overflow-hidden">
-                  ₹{summary.totalTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
+                {!isDraftDoc && (
+                  <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap overflow-hidden">
+                    ₹{summary.totalTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                )}
               </>
             )}
-            {isIntraState ? (
-              <>
+            {!isDraftDoc && (
+              isIntraState ? (
+                <>
+                  <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap overflow-hidden">
+                    ₹{summary.totalCgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap overflow-hidden">
+                    ₹{summary.totalSgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </>
+              ) : (
                 <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap overflow-hidden">
-                  ₹{summary.totalCgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ₹{summary.totalIgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
-                <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap overflow-hidden">
-                  ₹{summary.totalSgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
-              </>
-            ) : (
-              <td className="py-2 pr-2 pl-1 text-right border-r border-black whitespace-nowrap overflow-hidden">
-                ₹{summary.totalIgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </td>
+              )
             )}
             <td className="py-2 pr-2 pl-1 text-right whitespace-nowrap overflow-hidden font-extrabold text-black">
               ₹{summary.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -688,7 +712,7 @@ export function LiveInvoicePreview({
 
                     {/* 2. BILL TO & PLACE OF SUPPLY CARD */}
                     <div className="mt-4 p-4 rounded-xl border border-black bg-white flex justify-between items-start gap-4">
-                      {/* Left: Customer info */}
+                      {/* Left: Customer info (no duplicate Place of Supply / Karnataka) */}
                       <div className="space-y-1">
                         <span className="text-[11px] font-bold text-black tracking-wider uppercase block">
                           {type === 'purchase' ? 'RECEIVED FROM' : 'BILL TO'}
@@ -696,21 +720,11 @@ export function LiveInvoicePreview({
                         <h3 className="text-sm font-black text-black uppercase">
                           {partyName || (type === 'purchase' ? 'DEALER / SUPPLIER' : 'CASH / RETAIL CUSTOMER')}
                         </h3>
-                        {partyAddress ? (
-                          <p className="text-xs text-black leading-snug">
-                            {partyAddress}
+                        {partyAddress && partyAddress.trim() ? (
+                          <p className="text-xs text-black leading-snug max-w-[360px]">
+                            {partyAddress.trim()}
                           </p>
                         ) : null}
-                        {partyCity ? (
-                          <p className="text-xs text-black leading-snug">
-                            {partyCity}
-                          </p>
-                        ) : null}
-                        {(partyState || (!partyAddress && placeOfSupply)) && (
-                          <p className="text-xs font-semibold text-black uppercase">
-                            {partyState || placeOfSupply || 'KARNATAKA'}
-                          </p>
-                        )}
                         {(partyMobile || partyGstin) && (
                           <p className="text-xs text-black pt-0.5 font-bold">
                             {partyMobile && <span>PH: {partyMobile}</span>}
@@ -730,7 +744,11 @@ export function LiveInvoicePreview({
                         </span>
 
                         <div className="inline-block mt-1">
-                          {isIntraState ? (
+                          {isDraftDoc ? (
+                            <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-white text-black border border-black">
+                              ESTIMATE / NON-STATUTORY
+                            </span>
+                          ) : isIntraState ? (
                             <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-white text-black border border-black">
                               INTRASTATE (CGST + SGST)
                             </span>
@@ -792,10 +810,12 @@ export function LiveInvoicePreview({
                         </div>
                       )}
 
-                      {/* Boxed Table for Total Invoice Value & Total Amount Payable (All Black Borders) */}
+                      {/* Boxed Table for Total Invoice/Estimate Value & Total Amount Payable (All Black Borders) */}
                       <div className="border border-black bg-white">
                         <div className="flex justify-between items-center px-4 py-2 border-b border-black text-black">
-                          <span className="text-xs font-bold uppercase tracking-wide whitespace-nowrap">Total Invoice Value</span>
+                          <span className="text-xs font-bold uppercase tracking-wide whitespace-nowrap">
+                            {isDraftDoc ? 'Total Estimate Value' : 'Total Invoice Value'}
+                          </span>
                           <div className="flex items-center gap-3">
                             <span className="text-xs font-bold">₹</span>
                             <span className="text-base font-extrabold font-mono">
@@ -804,7 +824,9 @@ export function LiveInvoicePreview({
                           </div>
                         </div>
                         <div className="flex justify-between items-center px-4 py-2.5 bg-white text-black">
-                          <span className="text-xs font-black uppercase tracking-wide whitespace-nowrap">Total Amount Payable</span>
+                          <span className="text-xs font-black uppercase tracking-wide whitespace-nowrap">
+                            {isDraftDoc ? 'Estimated Amount' : 'Total Amount Payable'}
+                          </span>
                           <div className="flex items-center gap-3">
                             <span className="text-sm font-black">₹</span>
                             <span className="text-lg font-black font-mono">
@@ -881,7 +903,7 @@ export function LiveInvoicePreview({
               ) : (
                 /* INTERMEDIATE PAGE BOTTOM BAR */
                 <div className="mt-auto pt-3 border-t border-black flex justify-between items-center text-xs">
-                  <span className="font-semibold text-black uppercase">TAX INVOICE — {documentNumber}</span>
+                  <span className="font-semibold text-black uppercase">{documentTitle} — {documentNumber}</span>
                   <span className="text-[11px] font-bold text-black">
                     Page {page.pageIndex} of {pages.length}
                   </span>

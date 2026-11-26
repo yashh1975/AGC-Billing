@@ -101,8 +101,34 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
       const saveTransaction = db.transaction(() => {
         let customerId = data.customerId;
 
-        // Auto-register customer if customerId is not provided or customer details are new
-        if (!customerId && data.customer) {
+        // Auto-register customer if customerId is not provided, or sync edits if customerId is provided
+        if (customerId && data.customer) {
+          db.prepare(`
+            UPDATE customers SET
+              name = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE name END,
+              mobile = ?,
+              address = ?,
+              city = COALESCE(?, city),
+              state = COALESCE(?, state),
+              gstin = ?,
+              place_of_supply = COALESCE(?, place_of_supply),
+              last_transaction_date = ?,
+              updated_at = datetime('now')
+            WHERE id = ?
+          `).run(
+            data.customer.name?.trim() || null,
+            data.customer.name?.trim() || null,
+            data.customer.name?.trim() || null,
+            data.customer.mobile?.trim() || null,
+            data.customer.address?.trim() || null,
+            data.customer.city?.trim() || null,
+            data.customer.state?.trim() || null,
+            data.customer.gstin?.trim() || null,
+            data.placeOfSupply || null,
+            data.invoiceDate,
+            customerId
+          );
+        } else if (!customerId && data.customer) {
           // Check if customer exists by GSTIN or mobile
           let existingCustomer: any = null;
           if (data.customer.gstin) {
@@ -114,22 +140,32 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
 
           if (existingCustomer) {
             customerId = existingCustomer.id;
-            if (data.customer.address || data.customer.name || data.customer.gstin) {
+            if (data.customer.address || data.customer.name || data.customer.mobile || data.customer.gstin) {
               db.prepare(`
                 UPDATE customers SET
-                  name = COALESCE(?, name),
+                  name = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE name END,
+                  mobile = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE mobile END,
                   address = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE address END,
                   city = COALESCE(?, city),
-                  gstin = COALESCE(?, gstin),
+                  state = COALESCE(?, state),
+                  gstin = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE gstin END,
                   last_transaction_date = ?
                 WHERE id = ?
               `).run(
-                data.customer.name || null,
-                data.customer.address || null,
-                data.customer.address || null,
-                data.customer.address || null,
-                data.customer.city || null,
-                data.customer.gstin || null,
+                data.customer.name?.trim() || null,
+                data.customer.name?.trim() || null,
+                data.customer.name?.trim() || null,
+                data.customer.mobile?.trim() || null,
+                data.customer.mobile?.trim() || null,
+                data.customer.mobile?.trim() || null,
+                data.customer.address?.trim() || null,
+                data.customer.address?.trim() || null,
+                data.customer.address?.trim() || null,
+                data.customer.city?.trim() || null,
+                data.customer.state?.trim() || null,
+                data.customer.gstin?.trim() || null,
+                data.customer.gstin?.trim() || null,
+                data.customer.gstin?.trim() || null,
                 data.invoiceDate,
                 customerId
               );
@@ -500,8 +536,32 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
       const saveTransaction = db.transaction(() => {
         let supplierId = data.supplierId;
 
-        // Auto-register supplier if not existing
-        if (!supplierId && data.supplier) {
+        // Auto-register supplier if not existing, or sync edits if supplierId is provided
+        if (supplierId && data.supplier) {
+          db.prepare(`
+            UPDATE suppliers SET
+              name = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE name END,
+              mobile = ?,
+              address = ?,
+              city = COALESCE(?, city),
+              state = COALESCE(?, state),
+              gstin = ?,
+              last_transaction_date = ?,
+              updated_at = datetime('now')
+            WHERE id = ?
+          `).run(
+            data.supplier.name?.trim() || null,
+            data.supplier.name?.trim() || null,
+            data.supplier.name?.trim() || null,
+            data.supplier.mobile?.trim() || null,
+            data.supplier.address?.trim() || null,
+            data.supplier.city?.trim() || null,
+            data.supplier.state?.trim() || null,
+            data.supplier.gstin?.trim() || null,
+            data.recordDate,
+            supplierId
+          );
+        } else if (!supplierId && data.supplier) {
           let existingSupplier: any = null;
           if (data.supplier.gstin) {
             existingSupplier = db.prepare('SELECT id FROM suppliers WHERE gstin = ? AND is_active = 1').get(data.supplier.gstin);
@@ -512,22 +572,32 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
 
           if (existingSupplier) {
             supplierId = existingSupplier.id;
-            if (data.supplier.address || data.supplier.name || data.supplier.gstin) {
+            if (data.supplier.address || data.supplier.name || data.supplier.mobile || data.supplier.gstin) {
               db.prepare(`
                 UPDATE suppliers SET
-                  name = COALESCE(?, name),
+                  name = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE name END,
+                  mobile = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE mobile END,
                   address = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE address END,
                   city = COALESCE(?, city),
-                  gstin = COALESCE(?, gstin),
+                  state = COALESCE(?, state),
+                  gstin = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE gstin END,
                   last_transaction_date = ?
                 WHERE id = ?
               `).run(
-                data.supplier.name || null,
-                data.supplier.address || null,
-                data.supplier.address || null,
-                data.supplier.address || null,
-                data.supplier.city || null,
-                data.supplier.gstin || null,
+                data.supplier.name?.trim() || null,
+                data.supplier.name?.trim() || null,
+                data.supplier.name?.trim() || null,
+                data.supplier.mobile?.trim() || null,
+                data.supplier.mobile?.trim() || null,
+                data.supplier.mobile?.trim() || null,
+                data.supplier.address?.trim() || null,
+                data.supplier.address?.trim() || null,
+                data.supplier.address?.trim() || null,
+                data.supplier.city?.trim() || null,
+                data.supplier.state?.trim() || null,
+                data.supplier.gstin?.trim() || null,
+                data.supplier.gstin?.trim() || null,
+                data.supplier.gstin?.trim() || null,
                 data.recordDate,
                 supplierId
               );
@@ -828,8 +898,34 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
       const saveTransaction = db.transaction(() => {
         let customerId = data.customerId;
 
-        // Auto-register customer if customerId is not provided
-        if (!customerId && data.customer) {
+        // Auto-register customer if customerId is not provided, or sync edits if customerId is provided
+        if (customerId && data.customer) {
+          db.prepare(`
+            UPDATE customers SET
+              name = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE name END,
+              mobile = ?,
+              address = ?,
+              city = COALESCE(?, city),
+              state = COALESCE(?, state),
+              gstin = ?,
+              place_of_supply = COALESCE(?, place_of_supply),
+              last_transaction_date = ?,
+              updated_at = datetime('now')
+            WHERE id = ?
+          `).run(
+            data.customer.name?.trim() || null,
+            data.customer.name?.trim() || null,
+            data.customer.name?.trim() || null,
+            data.customer.mobile?.trim() || null,
+            data.customer.address?.trim() || null,
+            data.customer.city?.trim() || null,
+            data.customer.state?.trim() || null,
+            data.customer.gstin?.trim() || null,
+            data.placeOfSupply || null,
+            data.invoiceDate,
+            customerId
+          );
+        } else if (!customerId && data.customer) {
           let existingCustomer: any = null;
           if (data.customer.gstin) {
             existingCustomer = db.prepare('SELECT id FROM customers WHERE gstin = ? AND is_active = 1').get(data.customer.gstin);
@@ -840,22 +936,32 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
 
           if (existingCustomer) {
             customerId = existingCustomer.id;
-            if (data.customer.address || data.customer.name || data.customer.gstin) {
+            if (data.customer.address || data.customer.name || data.customer.mobile || data.customer.gstin) {
               db.prepare(`
                 UPDATE customers SET
-                  name = COALESCE(?, name),
+                  name = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE name END,
+                  mobile = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE mobile END,
                   address = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE address END,
                   city = COALESCE(?, city),
-                  gstin = COALESCE(?, gstin),
+                  state = COALESCE(?, state),
+                  gstin = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE gstin END,
                   last_transaction_date = ?
                 WHERE id = ?
               `).run(
-                data.customer.name || null,
-                data.customer.address || null,
-                data.customer.address || null,
-                data.customer.address || null,
-                data.customer.city || null,
-                data.customer.gstin || null,
+                data.customer.name?.trim() || null,
+                data.customer.name?.trim() || null,
+                data.customer.name?.trim() || null,
+                data.customer.mobile?.trim() || null,
+                data.customer.mobile?.trim() || null,
+                data.customer.mobile?.trim() || null,
+                data.customer.address?.trim() || null,
+                data.customer.address?.trim() || null,
+                data.customer.address?.trim() || null,
+                data.customer.city?.trim() || null,
+                data.customer.state?.trim() || null,
+                data.customer.gstin?.trim() || null,
+                data.customer.gstin?.trim() || null,
+                data.customer.gstin?.trim() || null,
                 data.invoiceDate,
                 customerId
               );

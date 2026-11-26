@@ -77,6 +77,7 @@ export function DealerPurchasePage() {
       grossWeight: 0,
       netWeight: 0,
       rate: 0,
+      vaPercent: 0,
       makingCharges: 0,
       otherCharges: 0,
       discount: 0,
@@ -159,6 +160,7 @@ export function DealerPurchasePage() {
         grossWeight: 0,
         netWeight: 0,
         rate: 0,
+        vaPercent: 0,
         makingCharges: 0,
         otherCharges: 0,
         discount: 0,
@@ -245,7 +247,7 @@ export function DealerPurchasePage() {
       const payload = {
         financialYearId: activeYear.id,
         supplierId: selectedSupplierId,
-        supplier: selectedSupplierId ? null : supplierForm,
+        supplier: supplierForm,
         originalInvoiceNumber,
         originalInvoiceDate,
         recordDate,
@@ -551,6 +553,8 @@ export function DealerPurchasePage() {
                     <th className="p-2.5 w-24 min-w-[85px] text-right font-bold">G. Wt(g)</th>
                     <th className="p-2.5 w-24 min-w-[85px] text-right font-bold">N. Wt(g)</th>
                     <th className="p-2.5 w-28 min-w-[105px] text-right font-bold">Rate (₹)</th>
+                    <th className="p-2.5 w-24 min-w-[85px] text-center font-bold">Wastage (VA %)</th>
+                    <th className="p-2.5 w-24 min-w-[85px] text-right font-bold">Disc (₹)</th>
                     <th className="p-2.5 w-20 min-w-[70px] text-center font-bold">GST %</th>
                     <th className="p-2.5 w-28 min-w-[95px] text-right font-bold">Taxable</th>
                     <th className="p-2.5 w-10 text-center"></th>
@@ -621,6 +625,31 @@ export function DealerPurchasePage() {
                               handleItemChange(idx, 'rate', parseFloat(e.target.value) || 0)
                             }
                             className="h-9 text-sm text-right font-medium"
+                          />
+                        </td>
+                        <td className="p-2">
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="0"
+                            value={item.vaPercent !== undefined ? item.vaPercent : ''}
+                            onChange={(e) =>
+                              handleItemChange(idx, 'vaPercent', parseFloat(e.target.value) || 0)
+                            }
+                            className="h-9 text-sm text-center font-bold text-amber-800"
+                            title="Wastage / VA %"
+                          />
+                        </td>
+                        <td className="p-2">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={item.discount || ''}
+                            onChange={(e) =>
+                              handleItemChange(idx, 'discount', parseFloat(e.target.value) || 0)
+                            }
+                            className="h-9 text-sm text-right"
                           />
                         </td>
                         <td className="p-2">
@@ -746,8 +775,6 @@ export function DealerPurchasePage() {
             partyMobile={supplierForm.mobile}
             partyGstin={supplierForm.gstin}
             partyAddress={supplierForm.address}
-            partyCity={supplierForm.city}
-            partyState={supplierForm.state}
             placeOfSupply={supplierForm.state || 'Karnataka'}
             originalInvoiceNumber={originalInvoiceNumber}
             originalInvoiceDate={originalInvoiceDate}
