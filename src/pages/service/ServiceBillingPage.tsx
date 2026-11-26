@@ -301,9 +301,6 @@ export function ServiceBillingPage() {
             <Wrench className="w-5 h-5 text-[#C49A35]" />
             Financial Services Billing
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Issue GST tax invoices for gold loan takeover, gold re-pledging, loan settlement, and valuation services (SAC 9971 — 18% GST)
-          </p>
         </div>
 
         <div className="flex items-center gap-2">

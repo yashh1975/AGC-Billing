@@ -254,9 +254,6 @@ export function AllBillsPage() {
             <FileText className="w-5 h-5 text-[#C49A35]" />
             All Bills & Master Transactions
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Universal billing browser across Sales Invoices, Dealer Purchases, and Service Invoices
-          </p>
         </div>
 
         <div className="flex items-center gap-2">

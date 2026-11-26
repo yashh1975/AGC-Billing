@@ -59,12 +59,6 @@ export function DashboardPage() {
           <h1 className="text-xl font-bold text-[#171717] tracking-tight">
             Billing & Operations Dashboard
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Real-time business summary for Financial Year{' '}
-            <span className="font-semibold text-[#A98226]">
-              {activeYear ? `FY ${activeYear.name}` : 'Current'}
-            </span>
-          </p>
         </div>
 
         {/* Quick Actions Bar */}

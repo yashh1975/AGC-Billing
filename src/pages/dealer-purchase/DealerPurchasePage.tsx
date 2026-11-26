@@ -320,9 +320,6 @@ export function DealerPurchasePage() {
             <ShoppingCart className="w-5 h-5 text-[#C49A35]" />
             Dealer Purchase Register
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Record bullion dealer purchases & original tax invoice references
-          </p>
         </div>
 
         <div className="flex items-center gap-2">

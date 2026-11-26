@@ -300,9 +300,6 @@ export function SalesBillingPage() {
             <Receipt className="w-5 h-5 text-[#C49A35]" />
             GST Sales Billing
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Generate official GST tax invoices for gold jewellery sales
-          </p>
         </div>
 
         <div className="flex items-center gap-2">

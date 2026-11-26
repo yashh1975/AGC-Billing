@@ -76,3 +76,149 @@
     display: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* DARK THEME OVERRIDES (Warm Obsidian & Gold Luxury Palette)     */
+/* ═══════════════════════════════════════════════════════════════ */
+html.dark {
+  color-scheme: dark;
+  --background: #121214;
+  --foreground: #f4f4f5;
+  --border: #2c2c32;
+  --muted: #1e1e24;
+  --muted-foreground: #a1a1aa;
+  --gold-light: #221e14;
+}
+
+html.dark body {
+  background-color: #121214;
+  color: #f4f4f5;
+}
+
+/* App Shell, Cards, Headers, Modals (Exclude physical A4 paper sheet!) */
+html.dark .bg-\[\#FDFBF7\] {
+  background-color: #121214 !important;
+}
+
+html.dark .bg-white:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *) {
+  background-color: #1a1a1e !important;
+}
+
+html.dark .bg-gray-50:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-\[\#F8F2E4\]:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-\[\#F5F1EA\]:not([id^="invoice-a4-sheet"] *) {
+  background-color: #24221b !important;
+}
+
+html.dark .bg-gray-100:not([id^="invoice-a4-sheet"] *) {
+  background-color: #27272c !important;
+}
+
+html.dark .border-\[\#E7E2D7\]:not([id^="invoice-a4-sheet"] *),
+html.dark .border-gray-200:not([id^="invoice-a4-sheet"] *),
+html.dark .border-gray-300:not([id^="invoice-a4-sheet"] *) {
+  border-color: #2e2e36 !important;
+}
+
+html.dark .divide-\[\#E7E2D7\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #2e2e36 !important;
+}
+
+/* Typography in Dark Mode */
+html.dark .text-\[\#171717\]:not([id^="invoice-a4-sheet"] *),
+html.dark .text-black:not([id^="invoice-a4-sheet"] *),
+html.dark .text-gray-900:not([id^="invoice-a4-sheet"] *),
+html.dark .text-gray-800:not([id^="invoice-a4-sheet"] *),
+html.dark .text-slate-900:not([id^="invoice-a4-sheet"] *) {
+  color: #f4f4f5 !important;
+}
+
+html.dark .border-black:not([id^="invoice-a4-sheet"] *) {
+  border-color: #3f3f46 !important;
+}
+
+html.dark .bg-black:not([id^="invoice-a4-sheet"] *) {
+  background-color: #C49A35 !important;
+}
+
+html.dark .text-gray-700:not([id^="invoice-a4-sheet"] *) {
+  color: #d4d4d8 !important;
+}
+
+html.dark .text-gray-600:not([id^="invoice-a4-sheet"] *),
+html.dark .text-gray-500:not([id^="invoice-a4-sheet"] *) {
+  color: #a1a1aa !important;
+}
+
+html.dark .text-gray-400:not([id^="invoice-a4-sheet"] *) {
+  color: #71717a !important;
+}
+
+/* Inputs, Selects, Textareas in Dark Mode */
+html.dark input:not([id^="invoice-a4-sheet"] *),
+html.dark select:not([id^="invoice-a4-sheet"] *),
+html.dark textarea:not([id^="invoice-a4-sheet"] *) {
+  background-color: #202026 !important;
+  color: #f4f4f5 !important;
+  border-color: #34343e !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #71717a !important;
+}
+
+/* Hover States */
+html.dark .hover\:bg-gray-50:hover,
+html.dark .hover\:bg-gray-100:hover,
+html.dark .hover\:bg-gray-200:hover {
+  background-color: #27272d !important;
+}
+
+html.dark .hover\:bg-\[\#F8F2E4\]:hover,
+html.dark .hover\:bg-amber-50:hover {
+  background-color: #2b271c !important;
+}
+
+/* Tinted status cards & table readability in Dark Mode (excluding A4 paper) */
+html.dark .bg-emerald-50:not([id^="invoice-a4-sheet"] *) {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+}
+html.dark .text-emerald-800:not([id^="invoice-a4-sheet"] *),
+html.dark .text-emerald-700:not([id^="invoice-a4-sheet"] *) {
+  color: #34d399 !important;
+}
+html.dark .border-emerald-200:not([id^="invoice-a4-sheet"] *),
+html.dark .border-emerald-300:not([id^="invoice-a4-sheet"] *) {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+html.dark .bg-rose-50:not([id^="invoice-a4-sheet"] *) {
+  background-color: rgba(244, 63, 94, 0.12) !important;
+}
+html.dark .text-rose-800:not([id^="invoice-a4-sheet"] *),
+html.dark .text-rose-700:not([id^="invoice-a4-sheet"] *) {
+  color: #fb7185 !important;
+}
+html.dark .border-rose-200:not([id^="invoice-a4-sheet"] *),
+html.dark .border-rose-300:not([id^="invoice-a4-sheet"] *) {
+  border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+html.dark .bg-amber-50:not([id^="invoice-a4-sheet"] *) {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+}
+html.dark .text-amber-800:not([id^="invoice-a4-sheet"] *) {
+  color: #fbbf24 !important;
+}
+
+/* Keep A4 Invoice Preview crisp white paper with solid black text in Dark Mode */
+html.dark [id^="invoice-a4-sheet"],
+html.dark [id^="invoice-a4-sheet"] * {
+  color-scheme: light;
+}
+
+html.dark [id^="invoice-a4-sheet"] {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}

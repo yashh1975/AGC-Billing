@@ -356,9 +356,6 @@ export function GstReportsPage() {
             <BarChart3 className="w-5 h-5 text-[#C49A35]" />
             GST Reports & CA Filing Preparation
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Live working register preview and audit-ready Excel master export for Sales, Dealer Purchases, Financial Services, and ITC
-          </p>
         </div>
       </div>
 

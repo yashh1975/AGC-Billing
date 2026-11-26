@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -42,6 +43,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
 export function App() {
   const { checkSession, isAuthenticated } = useAuth();
+  useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [checkingSetup, setCheckingSetup] = useState(true);

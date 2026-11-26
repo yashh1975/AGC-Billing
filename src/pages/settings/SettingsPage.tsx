@@ -254,9 +254,6 @@ export function SettingsPage() {
           <SettingsIcon className="w-5 h-5 text-[#C49A35]" />
           System Settings & Configuration
         </h1>
-        <p className="text-xs text-gray-500 mt-1">
-          Configure business details, GSTIN, invoice design, terms & conditions, and financial years
-        </p>
       </div>
 
       <Tabs defaultValue="business" className="space-y-4">

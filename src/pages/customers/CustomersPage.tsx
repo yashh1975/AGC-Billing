@@ -149,9 +149,6 @@ export function CustomersPage() {
             <Users className="w-5 h-5 text-[#C49A35]" />
             Customer Directory
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Manage customer master accounts, GST details and purchase transaction history
-          </p>
         </div>
 
         <Button size="sm" onClick={handleOpenAdd} className="text-xs flex items-center gap-1.5">

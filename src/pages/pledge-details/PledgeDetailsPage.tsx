@@ -319,10 +319,6 @@ export function PledgeDetailsPage() {
             <Landmark className="w-5 h-5 text-[#C49A35]" />
             Pledge Details Registry
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Confidential registry for pledged gold articles, loan principals, interest rates, and institutional pledge places.
-            <span className="ml-1 text-[#A98226] font-medium">(Strictly isolated from statutory CA filings & GST registers)</span>
-          </p>
         </div>
 
         <div className="flex items-center gap-2.5">

@@ -604,9 +604,6 @@ export function DraftBillsPage() {
             <FileEdit className="w-5 h-5 text-[#C49A35]" />
             Draft & Estimation Bills
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Generate and manage reference estimates without consuming official GST invoice sequence numbers. View, share via WhatsApp, or delete drafts.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">

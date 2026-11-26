@@ -110,9 +110,6 @@ export function DocumentsPage() {
             <FolderOpen className="w-5 h-5 text-[#C49A35]" />
             PDF Documents & Archive Vault
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Systematic physical document repository categorized by Financial Year, Category and Month
-          </p>
         </div>
 
         <Button
