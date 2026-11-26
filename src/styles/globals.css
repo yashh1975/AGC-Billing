@@ -78,141 +78,285 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
-/* DARK THEME OVERRIDES (Warm Obsidian & Gold Luxury Palette)     */
+/* DARK THEME OVERRIDES (Complete High-Contrast Obsidian & Gold)  */
 /* ═══════════════════════════════════════════════════════════════ */
 html.dark {
   color-scheme: dark;
-  --background: #121214;
-  --foreground: #f4f4f5;
-  --border: #2c2c32;
-  --muted: #1e1e24;
-  --muted-foreground: #a1a1aa;
-  --gold-light: #221e14;
+  --background: #0f0f12;
+  --foreground: #f4f4f6;
+  --border: #2f2f38;
+  --muted: #1b1b21;
+  --muted-foreground: #b0b0bc;
+  --gold: #d4aa44;
+  --gold-dark: #e5bc53;
+  --gold-light: #221f16;
 }
 
 html.dark body {
-  background-color: #121214;
-  color: #f4f4f5;
+  background-color: #0f0f12;
+  color: #f4f4f6;
 }
 
-/* App Shell, Cards, Headers, Modals (Exclude physical A4 paper sheet!) */
-html.dark .bg-\[\#FDFBF7\] {
-  background-color: #121214 !important;
+/* Main App Background & Neutral Surfaces (excluding physical A4 sheet) */
+html.dark .bg-\[\#FDFBF7\]:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *) {
+  background-color: #0f0f12 !important;
 }
 
-html.dark .bg-white:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *) {
-  background-color: #1a1a1e !important;
+html.dark .bg-white:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *),
+html.dark .bg-white\/80:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *) {
+  background-color: #18181d !important;
 }
 
-html.dark .bg-gray-50:not([id^="invoice-a4-sheet"] *),
-html.dark .bg-\[\#F8F2E4\]:not([id^="invoice-a4-sheet"] *),
-html.dark .bg-\[\#F5F1EA\]:not([id^="invoice-a4-sheet"] *) {
-  background-color: #24221b !important;
+html.dark .bg-gray-50:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *),
+html.dark .bg-slate-100:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *),
+html.dark .bg-\[\#F5F1EA\]:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *) {
+  background-color: #202028 !important;
 }
 
-html.dark .bg-gray-100:not([id^="invoice-a4-sheet"] *) {
-  background-color: #27272c !important;
+html.dark .bg-gray-100:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *),
+html.dark .bg-gray-200:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *) {
+  background-color: #26262f !important;
 }
 
+/* Warm Cream / Gold-tinted Containers & Table Headers */
+html.dark .bg-\[\#F8F2E4\]:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *),
+html.dark .bg-\[\#F0E6D0\]:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *),
+html.dark .bg-\[\#EBDDC3\]:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *),
+html.dark .bg-\[\#E7E2D7\]:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *) {
+  background-color: #242118 !important;
+}
+
+html.dark .bg-\[\#F8F2E4\]\/20:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-\[\#F8F2E4\]\/30:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-\[\#F8F2E4\]\/40:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-\[\#F8F2E4\]\/60:not([id^="invoice-a4-sheet"] *) {
+  background-color: rgba(196, 154, 53, 0.1) !important;
+}
+
+/* Gradient Banners */
+html.dark .bg-gradient-to-r.from-\[\#F8F2E4\] {
+  background-image: linear-gradient(to right, #231f14, #18181d, #231f14) !important;
+}
+
+/* Active Tabs & Primary Dark Buttons */
+html.dark [data-state="active"].data-\[state\=active\]\:bg-white {
+  background-color: #272730 !important;
+  color: #e5bc53 !important;
+}
+
+html.dark button.bg-\[\#171717\]:not([id^="invoice-a4-sheet"] *) {
+  background-color: #282419 !important;
+  border: 1px solid #C49A35 !important;
+  color: #f3ce6d !important;
+}
+
+html.dark button.bg-\[\#171717\]:not([id^="invoice-a4-sheet"] *):hover {
+  background-color: #363020 !important;
+}
+
+html.dark .bg-black:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *) {
+  background-color: #9a741b !important;
+}
+
+/* Tinted Status Backgrounds (Amber, Blue, Emerald, Rose, Purple, Yellow) */
+html.dark .bg-amber-50:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-amber-100:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-yellow-50:not([id^="invoice-a4-sheet"] *) {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+html.dark .bg-amber-50\/20:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-amber-50\/30:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-amber-50\/40:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-amber-50\/50:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-amber-50\/70:not([id^="invoice-a4-sheet"] *) {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+}
+
+html.dark .bg-blue-50:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-blue-100:not([id^="invoice-a4-sheet"] *) {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+html.dark .bg-blue-50\/20:not([id^="invoice-a4-sheet"] *) {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+html.dark .bg-emerald-50:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-emerald-100:not([id^="invoice-a4-sheet"] *) {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+html.dark .bg-emerald-50\/20:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-emerald-50\/70:not([id^="invoice-a4-sheet"] *) {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+html.dark .bg-rose-50:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-rose-100:not([id^="invoice-a4-sheet"] *) {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+}
+
+html.dark .bg-purple-50:not([id^="invoice-a4-sheet"] *),
+html.dark .bg-purple-100:not([id^="invoice-a4-sheet"] *) {
+  background-color: rgba(168, 85, 247, 0.16) !important;
+}
+
+/* Borders & Dividers */
 html.dark .border-\[\#E7E2D7\]:not([id^="invoice-a4-sheet"] *),
+html.dark .border-\[\#E7E2D7\]\/60:not([id^="invoice-a4-sheet"] *),
+html.dark .border-gray-100:not([id^="invoice-a4-sheet"] *),
 html.dark .border-gray-200:not([id^="invoice-a4-sheet"] *),
-html.dark .border-gray-300:not([id^="invoice-a4-sheet"] *) {
-  border-color: #2e2e36 !important;
+html.dark .border-gray-300:not([id^="invoice-a4-sheet"] *),
+html.dark .border-black:not([id^="invoice-a4-sheet"]):not([id^="invoice-a4-sheet"] *) {
+  border-color: #32323c !important;
 }
 
-html.dark .divide-\[\#E7E2D7\] > :not([hidden]) ~ :not([hidden]) {
-  border-color: #2e2e36 !important;
+html.dark .border-amber-200:not([id^="invoice-a4-sheet"] *),
+html.dark .border-amber-300:not([id^="invoice-a4-sheet"] *) {
+  border-color: rgba(245, 158, 11, 0.4) !important;
 }
 
-/* Typography in Dark Mode */
+html.dark .border-blue-200:not([id^="invoice-a4-sheet"] *),
+html.dark .border-blue-300:not([id^="invoice-a4-sheet"] *) {
+  border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+html.dark .border-emerald-200:not([id^="invoice-a4-sheet"] *),
+html.dark .border-emerald-300:not([id^="invoice-a4-sheet"] *) {
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+html.dark .border-rose-100:not([id^="invoice-a4-sheet"] *),
+html.dark .border-rose-200:not([id^="invoice-a4-sheet"] *),
+html.dark .border-rose-300:not([id^="invoice-a4-sheet"] *),
+html.dark .border-rose-400:not([id^="invoice-a4-sheet"] *) {
+  border-color: rgba(244, 63, 94, 0.4) !important;
+}
+
+html.dark .border-purple-200:not([id^="invoice-a4-sheet"] *) {
+  border-color: rgba(168, 85, 247, 0.4) !important;
+}
+
+html.dark .divide-\[\#E7E2D7\] > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #2c2c35 !important;
+}
+
+/* Typography — Guaranteed High Contrast for Every Text Color Outside A4 Sheet */
 html.dark .text-\[\#171717\]:not([id^="invoice-a4-sheet"] *),
 html.dark .text-black:not([id^="invoice-a4-sheet"] *),
 html.dark .text-gray-900:not([id^="invoice-a4-sheet"] *),
 html.dark .text-gray-800:not([id^="invoice-a4-sheet"] *),
 html.dark .text-slate-900:not([id^="invoice-a4-sheet"] *) {
-  color: #f4f4f5 !important;
+  color: #f4f4f6 !important;
 }
 
-html.dark .border-black:not([id^="invoice-a4-sheet"] *) {
-  border-color: #3f3f46 !important;
+html.dark .text-gray-700:not([id^="invoice-a4-sheet"] *),
+html.dark .text-gray-600:not([id^="invoice-a4-sheet"] *) {
+  color: #d4d4dc !important;
 }
 
-html.dark .bg-black:not([id^="invoice-a4-sheet"] *) {
-  background-color: #C49A35 !important;
-}
-
-html.dark .text-gray-700:not([id^="invoice-a4-sheet"] *) {
-  color: #d4d4d8 !important;
-}
-
-html.dark .text-gray-600:not([id^="invoice-a4-sheet"] *),
 html.dark .text-gray-500:not([id^="invoice-a4-sheet"] *) {
-  color: #a1a1aa !important;
+  color: #a6a6b3 !important;
 }
 
 html.dark .text-gray-400:not([id^="invoice-a4-sheet"] *) {
-  color: #71717a !important;
+  color: #9ca3af !important;
 }
 
-/* Inputs, Selects, Textareas in Dark Mode */
+html.dark .text-\[\#A98226\]:not([id^="invoice-a4-sheet"] *) {
+  color: #e8c266 !important;
+}
+
+html.dark .text-\[\#C49A35\]:not([id^="invoice-a4-sheet"] *) {
+  color: #e5bc53 !important;
+}
+
+html.dark .text-\[\#991b1b\]:not([id^="invoice-a4-sheet"] *) {
+  color: #fca5a5 !important;
+}
+
+html.dark .text-amber-600:not([id^="invoice-a4-sheet"] *),
+html.dark .text-amber-700:not([id^="invoice-a4-sheet"] *),
+html.dark .text-amber-800:not([id^="invoice-a4-sheet"] *),
+html.dark .text-amber-900:not([id^="invoice-a4-sheet"] *) {
+  color: #fcd34d !important;
+}
+
+html.dark .text-blue-600:not([id^="invoice-a4-sheet"] *),
+html.dark .text-blue-700:not([id^="invoice-a4-sheet"] *),
+html.dark .text-blue-800:not([id^="invoice-a4-sheet"] *) {
+  color: #93c5fd !important;
+}
+
+html.dark .text-emerald-600:not([id^="invoice-a4-sheet"] *),
+html.dark .text-emerald-700:not([id^="invoice-a4-sheet"] *),
+html.dark .text-emerald-800:not([id^="invoice-a4-sheet"] *),
+html.dark .text-emerald-900:not([id^="invoice-a4-sheet"] *) {
+  color: #6ee7b7 !important;
+}
+
+html.dark .text-rose-600:not([id^="invoice-a4-sheet"] *),
+html.dark .text-rose-700:not([id^="invoice-a4-sheet"] *),
+html.dark .text-rose-800:not([id^="invoice-a4-sheet"] *),
+html.dark .text-rose-900:not([id^="invoice-a4-sheet"] *) {
+  color: #fda4af !important;
+}
+
+html.dark .text-purple-600:not([id^="invoice-a4-sheet"] *),
+html.dark .text-purple-700:not([id^="invoice-a4-sheet"] *),
+html.dark .text-purple-800:not([id^="invoice-a4-sheet"] *) {
+  color: #d8b4fe !important;
+}
+
+html.dark .text-yellow-700:not([id^="invoice-a4-sheet"] *) {
+  color: #fde047 !important;
+}
+
+/* Inputs, Selects, Native Date Picker Icons & Textareas */
 html.dark input:not([id^="invoice-a4-sheet"] *),
 html.dark select:not([id^="invoice-a4-sheet"] *),
 html.dark textarea:not([id^="invoice-a4-sheet"] *) {
-  background-color: #202026 !important;
-  color: #f4f4f5 !important;
-  border-color: #34343e !important;
+  background-color: #1f1f27 !important;
+  color: #f4f4f6 !important;
+  border-color: #383844 !important;
+  color-scheme: dark;
+}
+
+html.dark select option {
+  background-color: #18181d;
+  color: #f4f4f6;
 }
 
 html.dark input::placeholder,
 html.dark textarea::placeholder {
-  color: #71717a !important;
+  color: #7c7c8a !important;
 }
 
-/* Hover States */
+/* Interactive Hover States */
 html.dark .hover\:bg-gray-50:hover,
 html.dark .hover\:bg-gray-100:hover,
 html.dark .hover\:bg-gray-200:hover {
-  background-color: #27272d !important;
+  background-color: #272730 !important;
 }
 
 html.dark .hover\:bg-\[\#F8F2E4\]:hover,
-html.dark .hover\:bg-amber-50:hover {
-  background-color: #2b271c !important;
+html.dark .hover\:bg-\[\#F0E6D0\]:hover,
+html.dark .hover\:bg-\[\#EBDDC3\]:hover,
+html.dark .hover\:bg-amber-50:hover,
+html.dark .hover\:bg-amber-50\/20:hover,
+html.dark .hover\:bg-amber-50\/50:hover,
+html.dark .hover\:bg-\[\#F8F2E4\]\/30:hover {
+  background-color: #29251b !important;
 }
 
-/* Tinted status cards & table readability in Dark Mode (excluding A4 paper) */
-html.dark .bg-emerald-50:not([id^="invoice-a4-sheet"] *) {
-  background-color: rgba(16, 185, 129, 0.12) !important;
-}
-html.dark .text-emerald-800:not([id^="invoice-a4-sheet"] *),
-html.dark .text-emerald-700:not([id^="invoice-a4-sheet"] *) {
-  color: #34d399 !important;
-}
-html.dark .border-emerald-200:not([id^="invoice-a4-sheet"] *),
-html.dark .border-emerald-300:not([id^="invoice-a4-sheet"] *) {
-  border-color: rgba(16, 185, 129, 0.3) !important;
+html.dark .hover\:bg-emerald-50:hover {
+  background-color: rgba(16, 185, 129, 0.22) !important;
 }
 
-html.dark .bg-rose-50:not([id^="invoice-a4-sheet"] *) {
-  background-color: rgba(244, 63, 94, 0.12) !important;
-}
-html.dark .text-rose-800:not([id^="invoice-a4-sheet"] *),
-html.dark .text-rose-700:not([id^="invoice-a4-sheet"] *) {
-  color: #fb7185 !important;
-}
-html.dark .border-rose-200:not([id^="invoice-a4-sheet"] *),
-html.dark .border-rose-300:not([id^="invoice-a4-sheet"] *) {
-  border-color: rgba(244, 63, 94, 0.3) !important;
+html.dark .hover\:bg-rose-50:hover {
+  background-color: rgba(244, 63, 94, 0.22) !important;
 }
 
-html.dark .bg-amber-50:not([id^="invoice-a4-sheet"] *) {
-  background-color: rgba(245, 158, 11, 0.12) !important;
-}
-html.dark .text-amber-800:not([id^="invoice-a4-sheet"] *) {
-  color: #fbbf24 !important;
-}
-
-/* Keep A4 Invoice Preview crisp white paper with solid black text in Dark Mode */
+/* Keep Physical A4 Invoice Preview Sheet Crisp White Paper & Black Ink */
 html.dark [id^="invoice-a4-sheet"],
 html.dark [id^="invoice-a4-sheet"] * {
   color-scheme: light;
@@ -221,4 +365,5 @@ html.dark [id^="invoice-a4-sheet"] * {
 html.dark [id^="invoice-a4-sheet"] {
   background-color: #ffffff !important;
   color: #000000 !important;
+  border-color: #000000 !important;
 }
