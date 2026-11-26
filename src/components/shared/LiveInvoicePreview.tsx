@@ -676,7 +676,7 @@ export function LiveInvoicePreview({
                             </span>
                             <span className="font-bold text-black">
                               {type === 'purchase'
-                                ? `${originalInvoiceNumber || 'DIRECT'} ${originalInvoiceDate ? `(${originalInvoiceDate})` : ''}`
+                                ? `${originalInvoiceNumber || 'DIRECT'}${originalInvoiceDate ? ` (${originalInvoiceDate})` : ''}`
                                 : 'NO'}
                             </span>
                           </div>

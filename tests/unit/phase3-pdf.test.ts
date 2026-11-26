@@ -111,6 +111,20 @@ describe('Phase 3 - PDF Generation, Folder Vault & WhatsApp Engine', () => {
     expect(output).toBeDefined();
     expect(output).toContain('DEALER PURCHASE BILL');
     expect(output).toContain('KB-8899');
+
+    // Direct purchase without original invoice number should still show DEALER BILL # and DIRECT (not REVERSE CHARGE)
+    const directPurchaseDoc = generateInvoicePdf({
+      ...sampleInvoiceData,
+      type: 'purchase',
+      documentNumber: 'AGC/P/26-27/0002',
+      originalInvoiceNumber: '',
+      originalInvoiceDate: '2026-11-26',
+    });
+    const directOutput = directPurchaseDoc.output();
+    expect(directOutput).toContain('DEALER BILL #');
+    expect(directOutput).toContain('DIRECT');
+    expect(directOutput).toContain('2026-11-26');
+    expect(directOutput).not.toContain('REVERSE CHARGE');
   });
 
   it.each([

@@ -238,10 +238,11 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
 
-  if (data.type === 'purchase' && data.originalInvoiceNumber) {
+  if (data.type === 'purchase') {
     doc.text('DEALER BILL #', metaLabelX, metaY3);
     doc.setFont('helvetica', 'bold');
-    doc.text(`${data.originalInvoiceNumber} (${data.originalInvoiceDate || ''})`, metaValX, metaY3);
+    const billRef = `${data.originalInvoiceNumber || 'DIRECT'}${data.originalInvoiceDate ? ` (${data.originalInvoiceDate})` : ''}`;
+    doc.text(billRef, metaValX, metaY3);
   } else {
     doc.text('REVERSE CHARGE', metaLabelX, metaY3);
     doc.setFont('helvetica', 'bold');
@@ -806,7 +807,7 @@ export function generateInvoicePdf(data: InvoicePdfData): jsPDF {
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
-      doc.text((data.partyName || 'Retail Customer').toUpperCase(), margin + 4, billBoxY + 9);
+      doc.text((data.partyName || (data.type === 'purchase' ? 'DEALER / SUPPLIER' : 'CASH / RETAIL CUSTOMER')).toUpperCase(), margin + 4, billBoxY + 9);
 
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
@@ -1354,8 +1355,8 @@ export function formatRecordToPdfData(
     partyMobile,
     partyGstin,
     partyAddress,
-    originalInvoiceNumber: doc.original_invoice_number,
-    originalInvoiceDate: doc.original_invoice_date,
+    originalInvoiceNumber: doc.original_invoice_number || doc.originalInvoiceNumber,
+    originalInvoiceDate: doc.original_invoice_date || doc.originalInvoiceDate,
     isDraft: isDraftDoc,
     items,
     subtotalPaise,
