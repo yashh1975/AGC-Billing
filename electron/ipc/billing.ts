@@ -28,6 +28,112 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
       return 'EST-0001';
     }
   }
+
+  // Shared helper to resolve, auto-register, or sync customer edits across Sales & Service billing
+  function resolveOrUpsertCustomer(db: any, data: any): number | null {
+    let customerId = data.customerId || null;
+    if (customerId && data.customer) {
+      db.prepare(`
+        UPDATE customers SET
+          name = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE name END,
+          mobile = ?,
+          address = ?,
+          city = COALESCE(?, city),
+          state = COALESCE(?, state),
+          gstin = ?,
+          place_of_supply = COALESCE(?, place_of_supply),
+          last_transaction_date = ?,
+          updated_at = datetime('now')
+        WHERE id = ?
+      `).run(
+        data.customer.name?.trim() || null,
+        data.customer.name?.trim() || null,
+        data.customer.name?.trim() || null,
+        data.customer.mobile?.trim() || null,
+        data.customer.address?.trim() || null,
+        data.customer.city?.trim() || null,
+        data.customer.state?.trim() || null,
+        data.customer.gstin?.trim() || null,
+        data.placeOfSupply || null,
+        data.invoiceDate,
+        customerId
+      );
+      return customerId;
+    }
+
+    if (!customerId && data.customer) {
+      let existingCustomer: any = null;
+      if (data.customer.gstin) {
+        existingCustomer = db.prepare('SELECT id FROM customers WHERE gstin = ? AND is_active = 1').get(data.customer.gstin);
+      }
+      if (!existingCustomer && data.customer.mobile) {
+        existingCustomer = db.prepare('SELECT id FROM customers WHERE mobile = ? AND is_active = 1').get(data.customer.mobile);
+      }
+
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+        if (data.customer.address || data.customer.name || data.customer.mobile || data.customer.gstin) {
+          db.prepare(`
+            UPDATE customers SET
+              name = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE name END,
+              mobile = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE mobile END,
+              address = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE address END,
+              city = COALESCE(?, city),
+              state = COALESCE(?, state),
+              gstin = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE gstin END,
+              last_transaction_date = ?
+            WHERE id = ?
+          `).run(
+            data.customer.name?.trim() || null,
+            data.customer.name?.trim() || null,
+            data.customer.name?.trim() || null,
+            data.customer.mobile?.trim() || null,
+            data.customer.mobile?.trim() || null,
+            data.customer.mobile?.trim() || null,
+            data.customer.address?.trim() || null,
+            data.customer.address?.trim() || null,
+            data.customer.address?.trim() || null,
+            data.customer.city?.trim() || null,
+            data.customer.state?.trim() || null,
+            data.customer.gstin?.trim() || null,
+            data.customer.gstin?.trim() || null,
+            data.customer.gstin?.trim() || null,
+            data.invoiceDate,
+            customerId
+          );
+        }
+      } else {
+        const lastCus = db.prepare(
+          "SELECT reference_number FROM customers WHERE reference_number LIKE 'AGC-CUS-%' ORDER BY id DESC LIMIT 1"
+        ).get() as any;
+        let nextNum = 1;
+        if (lastCus) {
+          const lastNum = parseInt(lastCus.reference_number.split('-').pop(), 10);
+          if (!isNaN(lastNum)) nextNum = lastNum + 1;
+        }
+        const refNumber = `AGC-CUS-${String(nextNum).padStart(4, '0')}`;
+
+        const insertCus = db.prepare(`
+          INSERT INTO customers (reference_number, name, mobile, address, city, state, state_code, gstin, place_of_supply, first_transaction_date, last_transaction_date)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          refNumber,
+          data.customer.name,
+          data.customer.mobile || null,
+          data.customer.address || null,
+          data.customer.city || null,
+          data.customer.state || null,
+          data.customer.stateCode || null,
+          data.customer.gstin || null,
+          data.placeOfSupply || 'Karnataka',
+          data.invoiceDate,
+          data.invoiceDate
+        );
+        customerId = insertCus.lastInsertRowid;
+      }
+    }
+    return customerId;
+  }
   // ─────────────────────────────────────────────────────────────────
   // SALES INVOICES
   // ─────────────────────────────────────────────────────────────────
@@ -99,108 +205,7 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
       const db = getDb();
 
       const saveTransaction = db.transaction(() => {
-        let customerId = data.customerId;
-
-        // Auto-register customer if customerId is not provided, or sync edits if customerId is provided
-        if (customerId && data.customer) {
-          db.prepare(`
-            UPDATE customers SET
-              name = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE name END,
-              mobile = ?,
-              address = ?,
-              city = COALESCE(?, city),
-              state = COALESCE(?, state),
-              gstin = ?,
-              place_of_supply = COALESCE(?, place_of_supply),
-              last_transaction_date = ?,
-              updated_at = datetime('now')
-            WHERE id = ?
-          `).run(
-            data.customer.name?.trim() || null,
-            data.customer.name?.trim() || null,
-            data.customer.name?.trim() || null,
-            data.customer.mobile?.trim() || null,
-            data.customer.address?.trim() || null,
-            data.customer.city?.trim() || null,
-            data.customer.state?.trim() || null,
-            data.customer.gstin?.trim() || null,
-            data.placeOfSupply || null,
-            data.invoiceDate,
-            customerId
-          );
-        } else if (!customerId && data.customer) {
-          // Check if customer exists by GSTIN or mobile
-          let existingCustomer: any = null;
-          if (data.customer.gstin) {
-            existingCustomer = db.prepare('SELECT id FROM customers WHERE gstin = ? AND is_active = 1').get(data.customer.gstin);
-          }
-          if (!existingCustomer && data.customer.mobile) {
-            existingCustomer = db.prepare('SELECT id FROM customers WHERE mobile = ? AND is_active = 1').get(data.customer.mobile);
-          }
-
-          if (existingCustomer) {
-            customerId = existingCustomer.id;
-            if (data.customer.address || data.customer.name || data.customer.mobile || data.customer.gstin) {
-              db.prepare(`
-                UPDATE customers SET
-                  name = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE name END,
-                  mobile = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE mobile END,
-                  address = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE address END,
-                  city = COALESCE(?, city),
-                  state = COALESCE(?, state),
-                  gstin = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE gstin END,
-                  last_transaction_date = ?
-                WHERE id = ?
-              `).run(
-                data.customer.name?.trim() || null,
-                data.customer.name?.trim() || null,
-                data.customer.name?.trim() || null,
-                data.customer.mobile?.trim() || null,
-                data.customer.mobile?.trim() || null,
-                data.customer.mobile?.trim() || null,
-                data.customer.address?.trim() || null,
-                data.customer.address?.trim() || null,
-                data.customer.address?.trim() || null,
-                data.customer.city?.trim() || null,
-                data.customer.state?.trim() || null,
-                data.customer.gstin?.trim() || null,
-                data.customer.gstin?.trim() || null,
-                data.customer.gstin?.trim() || null,
-                data.invoiceDate,
-                customerId
-              );
-            }
-          } else {
-            // Generate customer reference AGC-CUS-XXXX
-            const lastCus = db.prepare(
-              "SELECT reference_number FROM customers WHERE reference_number LIKE 'AGC-CUS-%' ORDER BY id DESC LIMIT 1"
-            ).get() as any;
-            let nextNum = 1;
-            if (lastCus) {
-              const lastNum = parseInt(lastCus.reference_number.split('-').pop(), 10);
-              if (!isNaN(lastNum)) nextNum = lastNum + 1;
-            }
-            const refNumber = `AGC-CUS-${String(nextNum).padStart(4, '0')}`;
-
-            const insertCus = db.prepare(`
-              INSERT INTO customers (reference_number, name, mobile, address, city, state, state_code, gstin, place_of_supply, first_transaction_date, last_transaction_date)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `).run(
-              refNumber,
-              data.customer.name,
-              data.customer.mobile || null,
-              data.customer.address || null,
-              data.customer.city || null,
-              data.customer.state || null,
-              data.customer.stateCode || null,
-              data.customer.gstin || null,
-              data.placeOfSupply || 'Karnataka',
-              data.invoiceDate,
-              data.invoiceDate
-            );
-            customerId = insertCus.lastInsertRowid;
-          }
-        }
+        const customerId = resolveOrUpsertCustomer(db, data);
 
         // Determine Invoice Number
         let invoiceNumber = data.invoiceNumber;
@@ -300,7 +305,7 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
               item.otherChargesPaise || 0,
               item.discountPaise || 0,
               item.taxableValuePaise || 0,
-              item.gstRate || 3,
+              item.gstRate !== undefined && item.gstRate !== null ? item.gstRate : (isFinal ? 3 : 0),
               item.cgstAmountPaise || 0,
               item.sgstAmountPaise || 0,
               item.igstAmountPaise || 0,
@@ -720,7 +725,7 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
               item.vaPercent || 0,
               item.vaAmountPaise || 0,
               item.taxableValuePaise || 0,
-              item.gstRate || 3,
+              item.gstRate !== undefined && item.gstRate !== null ? item.gstRate : (isFinal ? 3 : 0),
               item.cgstAmountPaise || 0,
               item.sgstAmountPaise || 0,
               item.igstAmountPaise || 0,
@@ -746,8 +751,8 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
           );
         }
 
-        // Update supplier totals
-        if (supplierId) {
+        // Update supplier totals strictly on finalized purchases (never on drafts)
+        if (supplierId && isFinal) {
           db.prepare(`
             UPDATE suppliers SET
               total_bills = total_bills + 1,
@@ -896,106 +901,7 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
       const db = getDb();
 
       const saveTransaction = db.transaction(() => {
-        let customerId = data.customerId;
-
-        // Auto-register customer if customerId is not provided, or sync edits if customerId is provided
-        if (customerId && data.customer) {
-          db.prepare(`
-            UPDATE customers SET
-              name = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE name END,
-              mobile = ?,
-              address = ?,
-              city = COALESCE(?, city),
-              state = COALESCE(?, state),
-              gstin = ?,
-              place_of_supply = COALESCE(?, place_of_supply),
-              last_transaction_date = ?,
-              updated_at = datetime('now')
-            WHERE id = ?
-          `).run(
-            data.customer.name?.trim() || null,
-            data.customer.name?.trim() || null,
-            data.customer.name?.trim() || null,
-            data.customer.mobile?.trim() || null,
-            data.customer.address?.trim() || null,
-            data.customer.city?.trim() || null,
-            data.customer.state?.trim() || null,
-            data.customer.gstin?.trim() || null,
-            data.placeOfSupply || null,
-            data.invoiceDate,
-            customerId
-          );
-        } else if (!customerId && data.customer) {
-          let existingCustomer: any = null;
-          if (data.customer.gstin) {
-            existingCustomer = db.prepare('SELECT id FROM customers WHERE gstin = ? AND is_active = 1').get(data.customer.gstin);
-          }
-          if (!existingCustomer && data.customer.mobile) {
-            existingCustomer = db.prepare('SELECT id FROM customers WHERE mobile = ? AND is_active = 1').get(data.customer.mobile);
-          }
-
-          if (existingCustomer) {
-            customerId = existingCustomer.id;
-            if (data.customer.address || data.customer.name || data.customer.mobile || data.customer.gstin) {
-              db.prepare(`
-                UPDATE customers SET
-                  name = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE name END,
-                  mobile = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE mobile END,
-                  address = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE address END,
-                  city = COALESCE(?, city),
-                  state = COALESCE(?, state),
-                  gstin = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE gstin END,
-                  last_transaction_date = ?
-                WHERE id = ?
-              `).run(
-                data.customer.name?.trim() || null,
-                data.customer.name?.trim() || null,
-                data.customer.name?.trim() || null,
-                data.customer.mobile?.trim() || null,
-                data.customer.mobile?.trim() || null,
-                data.customer.mobile?.trim() || null,
-                data.customer.address?.trim() || null,
-                data.customer.address?.trim() || null,
-                data.customer.address?.trim() || null,
-                data.customer.city?.trim() || null,
-                data.customer.state?.trim() || null,
-                data.customer.gstin?.trim() || null,
-                data.customer.gstin?.trim() || null,
-                data.customer.gstin?.trim() || null,
-                data.invoiceDate,
-                customerId
-              );
-            }
-          } else {
-            const lastCus = db.prepare(
-              "SELECT reference_number FROM customers WHERE reference_number LIKE 'AGC-CUS-%' ORDER BY id DESC LIMIT 1"
-            ).get() as any;
-            let nextNum = 1;
-            if (lastCus) {
-              const lastNum = parseInt(lastCus.reference_number.split('-').pop(), 10);
-              if (!isNaN(lastNum)) nextNum = lastNum + 1;
-            }
-            const refNumber = `AGC-CUS-${String(nextNum).padStart(4, '0')}`;
-
-            const insertCus = db.prepare(`
-              INSERT INTO customers (reference_number, name, mobile, address, city, state, state_code, gstin, place_of_supply, first_transaction_date, last_transaction_date)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `).run(
-              refNumber,
-              data.customer.name,
-              data.customer.mobile || null,
-              data.customer.address || null,
-              data.customer.city || null,
-              data.customer.state || null,
-              data.customer.stateCode || null,
-              data.customer.gstin || null,
-              data.placeOfSupply || 'Karnataka',
-              data.invoiceDate,
-              data.invoiceDate
-            );
-            customerId = insertCus.lastInsertRowid;
-          }
-        }
+        const customerId = resolveOrUpsertCustomer(db, data);
 
         // Allocate service sequence number (AGC/SV/26-27/0001)
         let invoiceNumber = data.invoiceNumber;
@@ -1084,7 +990,7 @@ export function registerBillingIpcHandlers(ipcMain: IpcMain): void {
               servicePaise,
               item.discountPaise || 0,
               item.taxableValuePaise || 0,
-              item.gstRate || 18,
+              item.gstRate !== undefined && item.gstRate !== null ? item.gstRate : (isFinal ? 18 : 0),
               item.cgstAmountPaise || 0,
               item.sgstAmountPaise || 0,
               item.igstAmountPaise || 0,

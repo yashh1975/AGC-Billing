@@ -89,6 +89,14 @@ describe('Phase 4 - Search, CA/GST Excel Reports & System Backup', () => {
     const purchaseResults = performGlobalSearch(db, 'INV-SUP-888');
     expect(purchaseResults.length).toBeGreaterThanOrEqual(1);
     expect(purchaseResults.some(r => r.category === 'purchase' && r.referenceNumber === 'AGC/P/26-27/0099')).toBe(true);
+
+    // Draft estimates must NOT leak into global search
+    db.prepare(`
+      INSERT INTO sales_invoices (invoice_number, customer_id, financial_year_id, invoice_date, status, payment_status, taxable_amount, cgst_amount, sgst_amount, igst_amount, grand_total, amount_received, balance_due)
+      VALUES ('EST-9999', ?, ?, '2026-11-18', 'draft', 'unpaid', 500000, 0, 0, 0, 500000, 0, 500000)
+    `).run(customerId, fyId);
+    const draftResults = performGlobalSearch(db, 'EST-9999');
+    expect(draftResults.some(r => r.referenceNumber === 'EST-9999')).toBe(false);
   });
 
   // ─────────────────────────────────────────────────────────────────

@@ -20,16 +20,17 @@ export function performGlobalSearch(db: any, query: string): GlobalSearchResult[
   const q = `%${query.trim().toLowerCase()}%`;
   const results: GlobalSearchResult[] = [];
 
-  // 1. Sales Invoices
+  // 1. Sales Invoices (exclude drafts)
   const sales = db.prepare(`
     SELECT s.id, s.invoice_number, s.invoice_date, (s.grand_total / 100.0) as final_amount, s.status, s.payment_status,
            c.name as customer_name, c.mobile as customer_mobile
     FROM sales_invoices s
     LEFT JOIN customers c ON s.customer_id = c.id
-    WHERE LOWER(s.invoice_number) LIKE ?
+    WHERE s.status != 'draft'
+      AND (LOWER(s.invoice_number) LIKE ?
        OR LOWER(c.name) LIKE ?
        OR LOWER(IFNULL(c.mobile, '')) LIKE ?
-       OR LOWER(IFNULL(c.gstin, '')) LIKE ?
+       OR LOWER(IFNULL(c.gstin, '')) LIKE ?)
     ORDER BY s.invoice_date DESC
     LIMIT 10
   `).all(q, q, q, q) as any[];
@@ -47,18 +48,19 @@ export function performGlobalSearch(db: any, query: string): GlobalSearchResult[
     });
   }
 
-  // 2. Dealer Purchases
+  // 2. Dealer Purchases (exclude drafts)
   const purchases = db.prepare(`
     SELECT p.id, p.record_number, p.original_invoice_number, p.original_invoice_date, p.record_date,
            (p.grand_total / 100.0) as total_amount, p.status, p.payment_status,
            s.name as supplier_name, s.mobile as supplier_mobile
     FROM dealer_purchase_records p
     LEFT JOIN suppliers s ON p.supplier_id = s.id
-    WHERE LOWER(p.record_number) LIKE ?
+    WHERE p.status != 'draft'
+      AND (LOWER(p.record_number) LIKE ?
        OR LOWER(IFNULL(p.original_invoice_number, '')) LIKE ?
        OR LOWER(s.name) LIKE ?
        OR LOWER(IFNULL(s.mobile, '')) LIKE ?
-       OR LOWER(IFNULL(s.gstin, '')) LIKE ?
+       OR LOWER(IFNULL(s.gstin, '')) LIKE ?)
     ORDER BY p.record_date DESC
     LIMIT 10
   `).all(q, q, q, q, q) as any[];
@@ -76,16 +78,17 @@ export function performGlobalSearch(db: any, query: string): GlobalSearchResult[
     });
   }
 
-  // 3. Service Invoices
+  // 3. Service Invoices (exclude drafts)
   const services = db.prepare(`
     SELECT sv.id, sv.invoice_number, sv.invoice_date, (sv.grand_total / 100.0) as final_amount, sv.status, sv.payment_status,
            c.name as customer_name, c.mobile as customer_mobile
     FROM service_invoices sv
     LEFT JOIN customers c ON sv.customer_id = c.id
-    WHERE LOWER(sv.invoice_number) LIKE ?
+    WHERE sv.status != 'draft'
+      AND (LOWER(sv.invoice_number) LIKE ?
        OR LOWER(c.name) LIKE ?
        OR LOWER(IFNULL(c.mobile, '')) LIKE ?
-       OR LOWER(IFNULL(c.gstin, '')) LIKE ?
+       OR LOWER(IFNULL(c.gstin, '')) LIKE ?)
     ORDER BY sv.invoice_date DESC
     LIMIT 10
   `).all(q, q, q, q) as any[];

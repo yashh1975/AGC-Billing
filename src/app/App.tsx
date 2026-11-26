@@ -73,18 +73,6 @@ export function App() {
     init();
   }, [checkSession, navigate]);
 
-  // Global Ctrl + K search listener
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        navigate('/all-bills');
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate]);
-
   if (checkingSetup) {
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center font-serif text-sm text-gray-500">
